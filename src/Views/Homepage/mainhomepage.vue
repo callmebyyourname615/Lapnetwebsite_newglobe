@@ -44,7 +44,7 @@
             <i class="fa-solid fa-envelope"></i>
           </a>
 
-          <button class="navCta">Login</button>
+          <a href="https://admin.lapnet.com.la/login" target="_blank"><button class="navCta">Login</button></a>
 
           <!-- Mobile only -->
           <button

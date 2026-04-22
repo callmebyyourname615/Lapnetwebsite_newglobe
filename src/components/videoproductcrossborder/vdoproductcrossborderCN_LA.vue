@@ -44,7 +44,7 @@
         <div class="bottomcontainer">
           <div class="headercondition">
             <p class="upi-text">
-              ເບື້ອງຈີນ/ສາກົນ (ສະແກນຊຳລະ) : ທະນາຄານທີ່ເປັນສະມາຊິກຂອງ Unionpay International ໃນທົ່ວໂລກ
+              ເບື້ອງຈີນ/ສາກົນ (ສະແກນຊຳລະ) : ທະນາຄານທີ່ເປັນສະມາຊິກຂອງ Unionpay International ໃນທົ່ວໂລກ <br>( Cross-border transactions may incur a transaction fee ) 
             </p>
           </div>
 

@@ -68,7 +68,7 @@
           </a>
 
           <!-- Login -->
-          <a href="http://localhost:5173/login" target="_blank"> 
+          <a href="https://admin.lapnet.com.la/login" target="_blank"> 
                 <button class="btn btnGhost">ເຂົ້າສູ່ລະບົບ</button>
 
                 </a>
