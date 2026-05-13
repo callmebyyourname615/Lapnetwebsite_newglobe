@@ -1,58 +1,99 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="robots" content="noindex,follow" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b1020" />
-    <meta name="referrer" content="strict-origin-when-cross-origin" />
 
-      <!-- <meta http-equiv="Content-Security-Policy" content="
-  default-src 'self' https:;
-  base-uri 'self';
-  object-src 'none';
-  form-action 'self';
-  script-src 'self' 'unsafe-inline' https:;
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
-  img-src 'self' data: blob: https:;
-  font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
-  connect-src 'self' https://test.lapnet.com.la wss://test.lapnet.com.la;
-  manifest-src 'self';
-"> -->
+<head>
 
-    <title>LAPNet</title>
+  <meta charset="UTF-8" />
+  <meta name="robots" content="index, follow" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="description" content="Lao National Payment Network" />
 
-    <link rel="icon" type="image/png" href="/logolapnet/fullcircle.png" />
-    <link rel="icon" href="/favicon/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/favicon/android-chrome-192x192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/favicon/android-chrome-512x512.png" />
+  <!-- <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self' https:;
+    base-uri 'self';
+    object-src 'none';
+    form-action 'self';
+    script-src 'self' 'unsafe-inline' https:;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+    img-src 'self' data: blob: https:;
+    font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+    connect-src 'self' https://www.lapnet.com.la wss://www.lapnet.com.la;
+    manifest-src 'self';
+  "> -->
 
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+  <title>LAPNet - Lao National Payment Network</title>
 
-    <!-- Font Awesome -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
-      integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
+  <!-- SEO -->
+  <meta name="keywords" content="LAPNet" />
+  <meta name="author" content="LAPNet" />
+  <link rel="canonical" href="https://www.lapnet.com.la/" />
 
-    <!-- Remix Icon -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.css"
-      integrity="sha512-kJlvECunwXftkPwyvHbclArO8wszgBGisiLeuDFwNM8ws+wKIw0sv1os3ClWZOcrEB2eRXULYUsm8OVRGJKwGA=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
-  </head>
+  <!-- Open Graph (Facebook / Line / LinkedIn) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.lapnet.com.la/" />
+  <meta property="og:site_name" content="LAPNet" />
+  <meta property="og:title" content="LAPNet - Lao National Payment Network" />
+  <meta property="og:description" content="LAPNet - Lao National Payment Network" />
+  <meta property="og:image" content="https://www.lapnet.com.la/logolapnet/fullcircle.png" />
+  <meta property="og:image:width" content="512" />
+  <meta property="og:image:height" content="512" />
+  <meta property="og:locale" content="lo_LA" />
 
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="LAPNet - Lao National Payment Network" />
+  <meta name="twitter:description" content="LAPNet - Lao National Payment Network" />
+  <meta name="twitter:image" content="https://www.lapnet.com.la/logolapnet/fullcircle.png" />
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "LAPNet",
+    "alternateName": "Lao National Payment Network",
+    "url": "https://www.lapnet.com.la",
+    "logo": "https://www.lapnet.com.la/logolapnet/fullcircle.png",
+    "description": "ພັດທະນາລະບົບການຊໍາລະທຸລະກຳຍ່ອຍ ໃຫ້ເປັນສູນກາງການຊໍາລະຂອງບັນດາຜູ້ໃຫ້ບໍລິການຊໍາລະ ທັງພາຍໃນ ແລະ ສາກົນ, ແນໃສ່ໃຫ້ປະຊາຊົນລາວໄດ້ໃຊ້ບໍລິການຊໍາລະທີ່ສະດວກວ່ອງໄວ, ທັນສະໄໝ, ປອດໄພ ແລະ ຕົ້ນທືນຕໍ່າ.",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "LA"
+    },
+    "sameAs": []
+  }
+  </script>
+
+
+  <link rel="icon" type="image/png" href="/logolapnet/fullcircle.png" />
+  <link rel="icon" href="/favicon/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon/android-chrome-192x192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/favicon/android-chrome-512x512.png" />
+
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+    integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer" />
+
+  <!-- Remix Icon -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.css"
+    integrity="sha512-kJlvECunwXftkPwyvHbclArO8wszgBGisiLeuDFwNM8ws+wKIw0sv1os3ClWZOcrEB2eRXULYUsm8OVRGJKwGA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer" />
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>
