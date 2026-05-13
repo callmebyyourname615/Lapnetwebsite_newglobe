@@ -55,7 +55,7 @@
   </div>
 
   <div class="memberscroll" id="members">
-    <allmemberscrolling />
+    <memberorbit />
   </div>
 
   <div class="heroproduct" id="products">
@@ -199,9 +199,8 @@
 }
 
 .memberscroll {
-  max-width: 1380px;
+  width: 100%;
   height: auto;
-  margin: 0 auto;
 }
 
 .whyus {
@@ -243,7 +242,7 @@ import bloghomepage from "../../components/blog/hompage/bloghomepage.vue"
 import main_navbar from "../../components/miannavbar/main_navbar.vue"
 import SwitchSplit from "./visionherosection.vue"
 import whychooseus from "./whychooseus.vue"
-import allmemberscrolling from "../../components/swiper/memberscrolling/allmemberscrolling.vue"
+import memberorbit from "../../components/swiper/memberscrolling/memberorbit.vue"
 import productherosectionhomepage from "./productherosectionhomepage.vue"
 import secondfooter from "../../components/footer/mainfooter/secondfooter.vue"
 import popupoverlay from "../../components/popup/popupoverlay.vue"
