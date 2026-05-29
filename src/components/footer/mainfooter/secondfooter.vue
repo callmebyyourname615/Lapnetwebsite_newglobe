@@ -55,8 +55,8 @@
                         ພັດທະນາລະບົບການຊໍາລະທຸລະກຳຍ່ອຍ ໃຫ້ເປັນສູນກາງການຊໍາລະຂອງບັນດາຜູ້ໃຫ້ບໍລິການຊໍາລະ ທັງພາຍໃນ ແລະ ສາກົນ, ແນໃສ່ໃຫ້ປະຊາຊົນລາວໄດ້ໃຊ້ບໍລິການຊໍາລະທີ່ສະດວກວ່ອງໄວ, ທັນສະໄໝ, ປອດໄພ ແລະ ຕົ້ນທືນຕໍ່າ.
                     </p>
                     <div class="footer-badges">
-                        <span class="badge">19 ທະນາຄານສະມາຊິກ</span>
-                        <span class="badge">2 Fintech</span>
+                        <span class="badge">{{ bankCount }} ທະນາຄານສະມາຊິກ</span>
+                        <span class="badge">{{ fintechCount }} Fintech</span>
                     </div>
                     <a href="https://web.facebook.com/laonationalpaymentnetwork/" target="_blank"> <button
                             class="btn-facebook">
@@ -171,7 +171,42 @@
 import { ref, onMounted, computed, nextTick } from 'vue'
 import { gsap } from 'gsap'
 import { RouterLink } from 'vue-router'
-import footerBg from '../../../assets/footer/backgroundfooter.png' // 👈 your image here
+import footerBg from '../../../assets/footer/backgroundfooter.png'
+
+// ── API helpers ───────────────────────────────────────────────────────────────
+function resolveEnvBaseUrl() {
+    const raw = String(import.meta.env.VITE_API_BASE_URL || '').trim()
+    return raw.replace(/\/+$/, '')
+}
+function joinBaseAndPath(base, path) {
+    const b = String(base || '').trim().replace(/\/+$/, '')
+    const p = String(path || '')
+    if (!b) return p
+    if (b.endsWith('/api') && /^\/api(\/|$)/i.test(p)) return b + p.replace(/^\/api/i, '')
+    return p.startsWith('/') ? b + p : b + '/' + p
+}
+
+const API_BASE = resolveEnvBaseUrl()
+const MEMBERS_URL = joinBaseAndPath(API_BASE, '/api/members')
+
+// ── Member counts ─────────────────────────────────────────────────────────────
+const members = ref([])
+const bankCount    = computed(() => members.value.filter(m => Number(m.fintech) === 0).length)
+const fintechCount = computed(() => members.value.filter(m => Number(m.fintech) === 1).length)
+
+async function fetchMembers() {
+    try {
+        const res = await fetch(MEMBERS_URL, { headers: { Accept: 'application/json' } })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const json = await res.json()
+        const list = Array.isArray(json) ? json : (json?.data ?? json?.members ?? json?.result ?? [])
+        members.value = Array.isArray(list) ? list : []
+    } catch (e) {
+        console.error('[Footer] fetch members failed:', e)
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const isMemberOpen = ref(false)
 const isAboutOpen = ref(false)
@@ -217,6 +252,8 @@ const toggleDropdown = (section) => {
 }
 
 onMounted(() => {
+    fetchMembers()
+
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
 
     tl.from('.footer-wrapper', {
