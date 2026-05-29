@@ -641,23 +641,28 @@ onMounted(async () => {
 
     <aside class="rightcontainer">
       <div class="filterPanel">
-        <div class="filterHeader">
-          <div>
-            <h2 class="filterTitle">ຄົ້ນຫາທະນາຄານສະມາຊິກ</h2>
-            <p class="filterSubtitle">ຄົ້ນຫາທະນາຄານສະມາຊິກລະບົບບັດຮ່ວມກັນ</p>
-          </div>
+
+        <div class="panelStatusBar">
+          <span class="statusDot"></span>
+          <span class="statusLabel">FILTER SYSTEM</span>
           <span class="filterBadge">LAPNet</span>
         </div>
 
+        <div class="panelTitleGroup">
+          <h2 class="filterTitle">ຄົ້ນຫາທະນາຄານສະມາຊິກ</h2>
+          <p class="filterSubtitle">ສະມາຊິກລະບົບບັດທະນາຄານຮ່ວມກັນ</p>
+        </div>
+
         <div class="searchBox">
-          <span class="searchIcon">
-            <img src="/icon/search2.png" alt="" style="width: 30px; height: 30px" />
-          </span>
+          <svg class="searchIcon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M13 13L17 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
           <input
             v-model="searchQuery"
             type="text"
             class="searchInput"
-            placeholder="ຄົ້ນຫາທະນາຄານສະມາຊິກລະບົບບັດທະນາຄານຮ່ວມກັນ..."
+            placeholder="ຄົ້ນຫາທະນາຄານ..."
           />
         </div>
 
@@ -665,8 +670,8 @@ onMounted(async () => {
 
         <div class="filterGroup">
           <div class="filterGroupHeader">
-            <span class="filterGroupTitle">ຄົ້ນໝວດໝູ່ທະນາຄານສະມາຊິກ</span>
-            <span class="filterGroupHint">5 ຕົວເລືອກ</span>
+            <span class="filterGroupTitle">ໝວດໝູ່ການບໍລິການ</span>
+            <span class="filterGroupHint">5 ລາຍການ</span>
           </div>
 
           <div class="filterChecks">
@@ -685,10 +690,11 @@ onMounted(async () => {
 
         <div class="filterFooter">
           <p class="filterFooterText">
-            ຄົ້ນຫາພົບ : <span class="filterFooterHighlight">{{ filteredMembers.length }}</span>
-            ສະມາຊິກລະບົບບັດທະນາຄານຮ່ວມກັນ
+            <span class="promptCaret">&gt;</span>
+            ຄົ້ນຫາພົບ <span class="filterFooterHighlight">{{ filteredMembers.length }}</span> ສະມາຊິກ
           </p>
         </div>
+
       </div>
     </aside>
   </div>
@@ -749,90 +755,121 @@ onMounted(async () => {
 .filterPanel {
   width: 100%;
   height: 100%;
-  padding: 18px 20px;
-  border-radius: 20px;
-  background: linear-gradient(145deg, #ffffff 0%, #e7f0ff 35%, #f6fbff 100%);
-  border: 1px solid rgba(58, 123, 255, 0.5);
-  box-shadow: 0 14px 40px rgba(10, 32, 94, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.7);
+  padding: 24px 22px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 6px rgba(15, 23, 42, 0.04), 0 16px 32px rgba(15, 23, 42, 0.06);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
 }
-.filterHeader {
+.filterPanel::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(61, 127, 255, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.panelStatusBar {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: center;
+  gap: 8px;
+}
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+  flex-shrink: 0;
+  animation: dotPulse 2.2s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.statusLabel {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: #94a3b8;
+  text-transform: uppercase;
+  font-weight: 500;
+  flex: 1;
+}
+.filterBadge {
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  background: rgba(61, 127, 255, 0.08);
+  border: 1px solid rgba(61, 127, 255, 0.2);
+  color: #3d7fff;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.panelTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 .filterTitle {
   font-size: var(--fs-lg);
-  font-weight: 700;
-  color: #0a1f55;
+  font-weight: 600;
+  color: #0f172a;
   margin: 0;
+  line-height: 1.3;
 }
 .filterSubtitle {
-  margin: 3px 0 0;
   font-size: var(--fs-sm);
-  color: #5a6f9f;
-}
-.filterBadge img {
-  width: 30px;
-  height: auto;
-}
-.filterBadge {
-  font-size: 11px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: linear-gradient(120deg, #1b5cff, #46a9ff);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  box-shadow: 0 0 12px rgba(58, 123, 255, 0.75);
-  align-self: center;
+  color: #94a3b8;
+  margin: 0;
 }
 .searchBox {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 20px 32px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(102, 153, 255, 0.7);
-  box-shadow: 0 6px 16px rgba(9, 30, 66, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.searchBox:focus-within {
+  border-color: rgba(61, 127, 255, 0.45);
+  box-shadow: 0 0 0 3px rgba(61, 127, 255, 0.08);
 }
 .searchIcon {
-  font-size: var(--fs-md);
+  color: #cbd5e1;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
 }
 .searchInput {
   flex: 1;
   border: none;
   outline: none;
   background: transparent;
-  font-size: var(--fs-xs);
-  color: #10275b;
+  font-size: var(--fs-base);
+  color: #0f172a;
 }
 .searchInput::placeholder {
-  color: #9aaad9;
+  color: #cbd5e1;
 }
 .filterDivider {
   height: 1px;
-  width: 100%;
-  border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    rgba(46, 94, 255, 0) 0%,
-    rgba(46, 94, 255, 0.7) 35%,
-    rgba(46, 94, 255, 0.7) 65%,
-    rgba(46, 94, 255, 0) 100%
-  );
+  background: rgba(15, 23, 42, 0.06);
 }
 .filterGroup {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
+  flex: 1;
 }
 .filterGroupHeader {
   display: flex;
@@ -840,77 +877,100 @@ onMounted(async () => {
   align-items: center;
 }
 .filterGroupTitle {
-  font-size: var(--fs-md);
-  font-weight: 600;
-  color: #12306a;
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 .filterGroupHint {
   font-size: 11px;
-  color: #7d90c7;
+  color: #94a3b8;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 99px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 .filterChecks {
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  margin-top: 30px;
+  gap: 4px;
 }
 .filterCheck {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
   cursor: pointer;
-  font-size: 13px;
-  color: #21345f;
   user-select: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.filterCheck:hover {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.07);
 }
 .filterCheck input {
   display: none;
 }
 .checkFake {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: 1px solid rgba(102, 155, 255, 0.9);
-  background: radial-gradient(circle at 30% 0%, #ffffff, #dfe9ff);
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 4px 10px rgba(44, 93, 255, 0.35);
-  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.12s ease;
+  flex-shrink: 0;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 .checkTick {
   font-size: 12px;
+  color: #fff;
   opacity: 0;
-  transform: scale(0.3);
+  transform: scale(0.4);
   transition: opacity 0.12s ease, transform 0.12s ease;
+  line-height: 1;
 }
 .filterCheck input:checked + .checkFake {
-  background: linear-gradient(135deg, #1a57ff, #47b3ff);
-  border-color: #ffffff;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7), 0 6px 14px rgba(43, 100, 255, 0.5);
-  transform: translateY(-1px);
+  background: #3d7fff;
+  border-color: #3d7fff;
 }
 .filterCheck input:checked + .checkFake .checkTick {
   opacity: 1;
   transform: scale(1);
-  color: #ffffff;
+}
+.filterCheck input:checked ~ .checkLabel {
+  color: #1d4ed8;
 }
 .checkLabel {
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
+  color: #475569;
+  line-height: 1.4;
+  transition: color 0.15s ease;
 }
 .filterFooter {
-  margin-top: auto;
-  padding-top: 4px;
-  border-top: 1px dashed rgba(148, 179, 255, 0.7);
+  padding-top: 16px;
+  border-top: 1px solid rgba(15, 23, 42, 0.07);
 }
 .filterFooterText {
   font-size: var(--fs-sm);
-  color: #1e3567;
-  margin: 6px 0 0;
+  color: #64748b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.promptCaret {
+  color: #3d7fff;
+  font-weight: 700;
+  font-size: 15px;
 }
 .filterFooterHighlight {
   font-weight: 700;
-  color: #275eff;
+  color: #2563eb;
 }
 .cardsgrid {
   display: grid;

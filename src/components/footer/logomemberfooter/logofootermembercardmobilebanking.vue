@@ -13,11 +13,9 @@
           {{ subtitle }}
         </p>
 
-        <!-- 🔹 feature-list from props -->
         <ul class="feature-list">
-          <li v-for="(feature, index) in features" :key="index">
-            {{ feature }}
-          </li>
+          <li>ສະມາຊິກລະບົບຊຳລະຂ້າມທະນາຄານເທິງມືຖືທັງຫມົດມີ: {{ totalCount }} ສະມາຊິກ.</li>
+          <li>ມີ {{ bankCount }} ທະນາຄານ ແລະ {{ fintechCount }} Fintech.</li>
         </ul>
 
        
@@ -57,68 +55,106 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, nextTick } from "vue";
 import { gsap } from "gsap";
 
+// ── API helpers ──────────────────────────────────────────────────────────────
+function resolveEnvBaseUrl() {
+  const raw = String(import.meta.env.VITE_API_BASE_URL || "").trim();
+  return raw.replace(/\/+$/, "");
+}
+function joinBaseAndPath(base, path) {
+  const b = String(base || "").trim().replace(/\/+$/, "");
+  const p = String(path || "");
+  if (!b) return p;
+  if (b.endsWith("/api") && /^\/api(\/|$)/i.test(p)) return b + p.replace(/^\/api/i, "");
+  return p.startsWith("/") ? b + p : b + "/" + p;
+}
+
+const API_BASE  = resolveEnvBaseUrl();
+const ASSET_BASE = API_BASE.endsWith("/api") ? API_BASE.slice(0, -4) : API_BASE;
+const MEMBERS_URL = joinBaseAndPath(API_BASE, "/api/members");
+
+function resolveImageUrl(raw) {
+  const s = String(raw || "").trim();
+  if (!s) return "";
+  if (/^data:/i.test(s) || /^blob:/i.test(s)) return s;
+  if (/^https?:\/\//i.test(s)) {
+    try {
+      const u = new URL(s);
+      const h = u.hostname.toLowerCase();
+      if (h === "localhost" || h === "127.0.0.1" || h === "0.0.0.0") {
+        return joinBaseAndPath(ASSET_BASE, u.pathname + u.search);
+      }
+    } catch {}
+    return s;
+  }
+  return joinBaseAndPath(ASSET_BASE, s.startsWith("/") ? s : "/" + s);
+}
+
+// ── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps({
-  // 🔹 subtitle text from parent
-  subtitle: {
-    type: String,
-    default:
-      "",
-  },
-  // 🔹 feature list from parent
-  features: {
-    type: Array,
-    default: () => [`ສະມາຊິກລະບົບຊຳລະຂ້າມທະນາຄານເທິງມືຖືທັງຫມົດມີ: 20 ທະນາຄານສະມາຊິກ.` , " ມີ 18 ທະນາຄານສະມາຊິກ ແລະ 2 Fintech."],
-  },
-  // existing logos prop
-  logos: {
-    type: Array,
-    default: () =>
-      Array.from({ length: 16 }, (_, i) => ({
-        label: `M${i + 1}`,
-        // src: "/logos/member-1.svg",
-      })),
-  },
+  subtitle: { type: String, default: "" },
 });
 
+// ── State ────────────────────────────────────────────────────────────────────
+const members = ref([]);
+
+// ── Computed counts ──────────────────────────────────────────────────────────
+const totalCount   = computed(() => members.value.length);
+const bankCount    = computed(() => members.value.filter(m => Number(m.fintech) === 0).length);
+const fintechCount = computed(() => members.value.filter(m => Number(m.fintech) === 1).length);
+
+// ── Logos for grid ───────────────────────────────────────────────────────────
+const logos = computed(() =>
+  members.value
+    .map(m => ({
+      src: resolveImageUrl(
+        m?.image ?? m?.image_url ?? m?.Image_url ?? m?.imageUrl ??
+        m?.logo ?? m?.logo_img ?? m?.img ?? m?.photo ?? ""
+      ),
+      alt: String(m?.BanknameEN ?? m?.BanknameLA ?? m?.bank_name ?? m?.name ?? "Member"),
+    }))
+    .filter(l => l.src)
+);
+
+// ── Fetch ────────────────────────────────────────────────────────────────────
+async function fetchMembers() {
+  try {
+    const res = await fetch(MEMBERS_URL, { headers: { Accept: "application/json" } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const list = Array.isArray(json) ? json : (json?.data ?? json?.members ?? json?.result ?? []);
+    members.value = (Array.isArray(list) ? list : [])
+      .filter(m => String(m?.mobiletransfer) === "1" || m?.mobiletransfer === true)
+      .sort((a, b) => Number(a?.idmember ?? a?.id ?? 0) - Number(b?.idmember ?? b?.id ?? 0));
+  } catch (e) {
+    console.error("[MobileBankingFooter] fetch failed:", e);
+    members.value = [];
+  }
+}
+
+// ── Refs ─────────────────────────────────────────────────────────────────────
 const leftPane = ref(null);
 const logoGrid = ref(null);
 const logoItems = ref([]);
 
 onMounted(async () => {
+  await fetchMembers();
   await nextTick();
 
-  // Left description animation
   gsap.from(leftPane.value, {
-    duration: 0.9,
-    opacity: 0,
-    x: -30,
-    ease: "power3.out",
+    duration: 0.9, opacity: 0, x: -30, ease: "power3.out",
   });
 
-  // Logo entrance
   gsap.from(logoItems.value, {
-    duration: 0.7,
-    opacity: 0,
-    scale: 0.85,
-    y: 24,
-    ease: "power3.out",
-    stagger: 0.06,
+    duration: 0.7, opacity: 0, scale: 0.85, y: 24,
+    ease: "power3.out", stagger: 0.06,
   });
 
-  // Floating animation on logos
   gsap.to(logoItems.value, {
-    y: -8,
-    duration: 2.6,
-    repeat: -1,
-    yoyo: true,
-    ease: "sine.inOut",
-    stagger: {
-      from: "center",
-      amount: 1.6,
-    },
+    y: -8, duration: 2.6, repeat: -1, yoyo: true,
+    ease: "sine.inOut", stagger: { from: "center", amount: 1.6 },
   });
 });
 </script>

@@ -65,13 +65,6 @@ const ASSET_BASE = API_BASE.endsWith("/api") ? API_BASE.slice(0, -4) : API_BASE;
 const MEMBERS_API_URL = joinBaseAndPath(API_BASE, "/api/members");
 
 
-// ✅ fallback nodes (match 22)
-const DEFAULT_NODES: Endpoint[] = Array.from({ length: 22 }).map((_, i) => ({
-  idmember: i + 1,
-  name: `Logo ${i + 1}`,
-  logo: `/logos/logo-${String(i + 1).padStart(2, "0")}.png`,
-}));
-
 const props = withDefaults(
   defineProps<{
     pairs?: ProductPair[];
@@ -118,9 +111,6 @@ const props = withDefaults(
 
     hubFrontLift?: number;
     hubRenderOrder?: number;
-
-    /** ✅ how many member logos to show (set 22 by default) */
-    memberLimit?: number;
   }>(),
   {
     pairs: () => [],
@@ -167,9 +157,6 @@ const props = withDefaults(
 
     hubFrontLift: 0.14,
     hubRenderOrder: 50,
-
-    // ✅ you want all 22 logos
-    memberLimit: 22,
   }
 );
 
@@ -333,15 +320,10 @@ const resolveImage = (img: any) => {
   return joinBaseAndPath(ASSET_BASE, "/" + s);
 };
 
-const fallbackLogoById = (id: number) => {
-  return `/logos/logo-${String(id).padStart(2, "0")}.png`;
-};
-
-// ✅ IMPORTANT: prefer "image" (relative) over "image_url" (can be wrong like localhost)
 const pickMemberImage = (item: any) => {
   return (
-    item?.image ?? // ✅ correct server-relative path from your JSON sample
-    item?.image_url ?? // may be wrong (localhost), but resolveImage() rewrites it if needed
+    item?.image ??
+    item?.image_url ??
     item?.Image_url ??
     item?.imageUrl ??
     item?.logo ??
@@ -358,9 +340,8 @@ const normalizeMemberToNode = (item: any) => {
   if (id == null) return null;
 
   const name = pickMemberName(item, id);
-
-  const logoResolved = resolveImage(pickMemberImage(item));
-  const logo = logoResolved || fallbackLogoById(id);
+  const logo = resolveImage(pickMemberImage(item));
+  if (!logo) return null;
 
   return {
     idmember: id,
@@ -419,9 +400,7 @@ async function loadMembersNodes() {
 
     mapped.sort((a, b) => (a.idmember ?? 0) - (b.idmember ?? 0));
 
-    const limitRaw = props.memberLimit ?? 22;
-    const limit = limitRaw <= 0 ? mapped.length : limitRaw;
-    membersNodes.value = mapped.slice(0, Math.max(1, limit));
+    membersNodes.value = mapped;
   } catch (e) {
     console.error("Load members nodes failed:", e);
     membersNodes.value = null;
@@ -444,11 +423,10 @@ const nodes = computed<Endpoint[]>(() => {
     return Array.from(map.values()).slice(0, 50);
   }
 
-  // ✅ default: from API members (ALL 22)
+  // from API members
   if (membersNodes.value && membersNodes.value.length > 0) return membersNodes.value;
 
-  // ✅ fallback
-  return DEFAULT_NODES;
+  return [];
 });
 
 let renderer: THREE.WebGLRenderer | null = null;
