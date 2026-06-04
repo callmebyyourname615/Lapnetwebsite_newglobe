@@ -74,7 +74,7 @@ const props = defineProps({
 const tableRef = ref(null)
 
 const original = [
-  { id: 1, name: '1.000 ກີບ', role: '2.000.001 ກີບ', location: '1.000 / ທຸລະກຳ' },
+  { id: 1, name: '1.000 ກີບ', role: '2.000.000 ກີບ', location: '1.000 / ທຸລະກຳ' },
   { id: 2, name: '2.000.001 ກີບ', role: '3.000.000 ກີບ', location: '1.500 ກີບ / ທຸລະກຳ' },
   { id: 3, name: '3.000.001 ກີບ', role: '4.000.000 ກີບ', location: '2.500 ກີບ / ທຸລະກຳ' },
   { id: 4, name: '4.000.001 ກີບ', role: '5.000.000 ກີບ', location: '3.000 ກີບ / ທຸລະກຳ' },
