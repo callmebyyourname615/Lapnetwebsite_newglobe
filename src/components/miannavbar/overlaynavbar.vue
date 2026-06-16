@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import DarkVeil from '../aurora/DarkVeil.vue'
 
 const props = defineProps({
   // Main title at the top
@@ -25,7 +26,10 @@ const containerStyle = computed(() => ({
 </script>
 
 <template>
-  <header class="hero" :style="containerStyle">
+  <header class="hero">
+    <div class="hero__aurora" aria-hidden="true">
+      <DarkVeil :hue-shift="20" :speed="0.6" />
+    </div>
     <div class="hero__overlay">
       <div class="hero__inner">
         <!-- Title -->
@@ -64,24 +68,29 @@ const containerStyle = computed(() => ({
 /* ===== Layout base ===== */
 .hero {
   width: 100%;
-  min-height: 260px;          /* auto height on small screens, taller on big */
+  min-height: 260px;
   display: flex;
   align-items: flex-end;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
   position: relative;
+  overflow: hidden;
+  background: #050b1b;
 }
 
-/* dark overlay for text readability */
+.hero__aurora {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero__overlay {
+  position: relative;
+  z-index: 1;
+}
+
 .hero__overlay {
   width: 100%;
-  
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.25) 0%,
-    rgba(0, 0, 0, 0.75) 100%
-  );
+  background: transparent;
   padding: clamp(2rem, 4vw, 3.5rem) 1.5rem 5.5rem;
   box-sizing: border-box;
 }

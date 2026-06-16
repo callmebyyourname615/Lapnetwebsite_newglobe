@@ -198,6 +198,12 @@ onMounted(() => {
   window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   fetchMemberLogos();
 });
+
+const activeTab = ref(1);
+const setTab = (n) => {
+  activeTab.value = n;
+  window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+};
 </script>
 <template>
   <navbar
@@ -205,13 +211,38 @@ onMounted(() => {
     :breadcrumb="[
       'ໜ້າຫຼັກ',
       'ຜະລິດຕະພັນ ແລະ ການບໍລິການ',
-      'ໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື'
+      activeTab === 1
+        ? 'ໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື'
+        : 'ບໍລິການໂອນເງິນຂ້າມທະນາຄານ ສະກຸນເງິນຕາຕ່າງປະເທດ ຜ່ານ LAPNet'
     ]"
     background-image="/overlaynav/product/navigatorcontent-bg.png"
   />
 
-  <div class="productdiscription">
-    <hero_sectionproduct4 />
+  <div class="hero-shell">
+    <nav class="product-tabbar" role="tablist" aria-label="Product sections">
+      <button
+        type="button"
+        role="tab"
+        :aria-selected="activeTab === 1"
+        :class="['product-tab', { active: activeTab === 1 }]"
+        @click="setTab(1)"
+      >
+        ໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື
+      </button>
+      <button
+        type="button"
+        role="tab"
+        :aria-selected="activeTab === 2"
+        :class="['product-tab', { active: activeTab === 2 }]"
+        @click="setTab(2)"
+      >
+        ບໍລິການໂອນເງິນຂ້າມທະນາຄານ ສະກຸນເງິນຕາຕ່າງປະເທດ ຜ່ານ LAPNet
+      </button>
+    </nav>
+
+    <div class="productdiscription">
+      <hero_sectionproduct4 />
+    </div>
   </div>
 
   <div class="benetfix">
@@ -285,11 +316,17 @@ onMounted(() => {
 
   <div class="footermemberproduct1">
     <product4_footerlogomember
-      :subtitle="`  ການໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື (Fund Transfer via Mobile
+      :subtitle="activeTab === 1
+        ? `  ການໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື (Fund Transfer via Mobile
             Application) ໂດຍນຳໃຊ້ລະບົບ LMPS ໃນການເຊື່ອມໂຍງຜ່ານ
             Applications ຂອງແຕ່ລະທະນາຄານທີ່ເປັນສະມາຊິກຂອງບໍລິສັດລາວ
             ເນເຊີນນໍເພເມັ້ນ ເນັດເວີກ ໃຫ້ສາມາດໃຊ້ຟັງຊັ່ນການດຳເນີນທຸລະກຳໂອນ
-            ເງິນຂ້າມທະນາຄານໄດ້.`"
+            ເງິນຂ້າມທະນາຄານໄດ້.`
+        : `  ບໍລິການໂອນເງິນຂ້າມທະນາຄານ ສະກຸນເງິນຕາຕ່າງປະເທດ ຜ່ານ LAPNet
+            ໂດຍນຳໃຊ້ລະບົບ LMPS ໃນການເຊື່ອມໂຍງຜ່ານ Applications
+            ຂອງແຕ່ລະທະນາຄານທີ່ເປັນສະມາຊິກຂອງບໍລິສັດລາວ
+            ເນເຊີນນໍເພເມັ້ນ ເນັດເວີກ ໃຫ້ສາມາດໃຊ້ຟັງຊັ່ນການດຳເນີນທຸລະກຳໂອນ
+            ເງິນຕາຕ່າງປະເທດຂ້າມທະນາຄານໄດ້.`"
       :features="[
         ' ຂອບເຂດການໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື ແມ່ນສາມາດໂອນເງິນແຕ່ 1.000 ກີບ ຫາ 200.000.000 ກີບ/ຄັ້ງ. ',
       ]"
@@ -301,6 +338,60 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.hero-shell {
+  position: relative;
+  background: #ffffff;
+}
+.hero-shell :deep(.hero) {
+  background: transparent !important;
+}
+.hero-shell :deep(.hero)::before {
+  display: none !important;
+}
+.product-tabbar {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 6rem 1rem 2.5rem;
+  margin-bottom: -1.5rem;
+  background: transparent;
+}
+.product-tab {
+  appearance: none;
+  border: 2px solid rgba(0, 51, 171, 0.5);
+  background: #fff;
+  color: #0033ab;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0.75rem 1.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  box-shadow: 0 6px 18px rgba(9, 22, 70, 0.08);
+  transition: all 0.2s ease;
+}
+.product-tab:hover {
+  background: rgba(0, 51, 171, 0.08);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(9, 22, 70, 0.14);
+}
+.product-tab.active {
+  background: linear-gradient(95deg, #00033a 0%, #0033ab 60%, #2a6dff 100%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 12px 28px rgba(0, 51, 171, 0.5), 0 0 0 4px rgba(0, 51, 171, 0.12);
+  transform: translateY(-1px);
+}
+.container2 {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0b1020;
+}
+
 .tablefee {
   width: 100%;
   height: auto;
