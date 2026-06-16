@@ -5,11 +5,12 @@ import navbar from "../../components/miannavbar/main_navbar.vue";
 
 import tagproduct from "../../components/tagproduct/tagproduct.vue";
 import product4_footerlogomember from "../../components/footer/logomemberfooter/product4_footerlogomember.vue";
-import product4tech from "../techbenetfit/product4tech.vue";
+
 import logofloating from "../../components/logofloating/logofloating.vue";
 import tablefee from "../../components/tablefee/tablefee.vue";
 import hero_sectionproduct4 from "../../Views/products/product_herosection/hero_sectionproduct4.vue";
 import secondfooter from "../../components/footer/mainfooter/secondfooter.vue";
+import product4_tab2 from "./product4_tab2.vue";
 
 const heroVideo = "/videos/productvdo-background.mp4";
 
@@ -240,99 +241,103 @@ const setTab = (n) => {
       </button>
     </nav>
 
-    <div class="productdiscription">
-      <hero_sectionproduct4 />
+    <template v-if="activeTab === 1">
+      <div class="productdiscription">
+        <hero_sectionproduct4 />
+      </div>
+    </template>
+  </div>
+
+  <!-- ============================================================
+       TAB 1: ໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື
+       ============================================================ -->
+  <template v-if="activeTab === 1">
+    <div class="benetfix">
+      <product4tech />
     </div>
-  </div>
 
-  <div class="benetfix">
-    <product4tech />
-  </div>
+    <div class="condition_for_use">
+      <section class="intg-section">
+        <div class="intg-grid" aria-hidden="true"></div>
 
-  <div class="condition_for_use">
-    <section class="intg-section">
-      <!-- Subtle vertical grid (from zip) -->
-      <div class="intg-grid" aria-hidden="true"></div>
-
-      <div class="intg-inner">
-        <!-- Left: ~42% -->
-        <div class="intg-left">
-          <h2 class="intg-title">
-            <span class="intg-title-accent">ເງື່ອນໄຂ</span> ການໃຊ້ບໍລິການ
-          </h2>
-          <div class="intg-desc">
-            <p>
-              ລຸກຄ້າສາມາດນຳໃຊ້ເລກບັນຊີທະນາຄານ ດຳເນີນທຸລະກຳເທິງມືຖື ໂດຍຜ່ານ Applications
-              ຂອງແຕ່ລະທະນາຄານທຸລະກິດທີ່ເປັນສະມາຊິກຂອງບໍລິສັດ LAPNet
-              ໄດ້ໃນໄລຍະທີ່ເປີດຕົວຜະລິດຕະພັນການໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື.
-            </p>
-            <p>
-              ການໂອນເງິນເທີງມືຖືໂດຍນຳໃຊ້ຮູບແບບການໂອນ ບັນຊີຫາບັນຊີ (Account Fund Transfer)
-              ແມ່ນມີສະມາຊິກທັງໝົດ 18 ທະນາຄານ ແລະ 2 Fintech ທີ່ໃຫ້ບໍລິການ.
-            </p>
+        <div class="intg-inner">
+          <div class="intg-left">
+            <h2 class="intg-title">
+              <span class="intg-title-accent">ເງື່ອນໄຂ</span> ການໃຊ້ບໍລິການ
+            </h2>
+            <div class="intg-desc">
+              <p>
+                ລຸກຄ້າສາມາດນຳໃຊ້ເລກບັນຊີທະນາຄານ ດຳເນີນທຸລະກຳເທິງມືຖື ໂດຍຜ່ານ Applications
+                ຂອງແຕ່ລະທະນາຄານທຸລະກິດທີ່ເປັນສະມາຊິກຂອງບໍລິສັດ LAPNet
+                ໄດ້ໃນໄລຍະທີ່ເປີດຕົວຜະລິດຕະພັນການໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື.
+              </p>
+              <p>
+                ການໂອນເງິນເທີງມືຖືໂດຍນຳໃຊ້ຮູບແບບການໂອນ ບັນຊີຫາບັນຊີ (Account Fund Transfer)
+                ແມ່ນມີສະມາຊິກທັງໝົດ 18 ທະນາຄານ ແລະ 2 Fintech ທີ່ໃຫ້ບໍລິການ.
+              </p>
+            </div>
           </div>
-        </div>
 
-        <!-- Right: ~58% floating logo cloud -->
-        <div class="intg-right">
-          <div class="logo-cloud">
-            <div class="logo-track" :style="{ '--tile-h': TILE_HEIGHT + 'px' }">
-              <!-- Tile A -->
-              <div class="logo-tile" :style="{ height: TILE_HEIGHT + 'px' }">
-                <div
-                  v-for="(logo, i) in CLOUD_LOGOS"
-                  :key="'a-' + i"
-                  class="logo-bubble"
-                  :style="bubbleStyle(logo)"
-                >
-                  <img :src="logo.src" :alt="logo.alt" />
+          <div class="intg-right">
+            <div class="logo-cloud">
+              <div class="logo-track" :style="{ '--tile-h': TILE_HEIGHT + 'px' }">
+                <div class="logo-tile" :style="{ height: TILE_HEIGHT + 'px' }">
+                  <div
+                    v-for="(logo, i) in CLOUD_LOGOS"
+                    :key="'a-' + i"
+                    class="logo-bubble"
+                    :style="bubbleStyle(logo)"
+                  >
+                    <img :src="logo.src" :alt="logo.alt" />
+                  </div>
                 </div>
-              </div>
-              <!-- Tile B (duplicate for seamless loop) -->
-              <div class="logo-tile" :style="{ height: TILE_HEIGHT + 'px' }" aria-hidden="true">
-                <div
-                  v-for="(logo, i) in CLOUD_LOGOS"
-                  :key="'b-' + i"
-                  class="logo-bubble"
-                  :style="bubbleStyle(logo)"
-                >
-                  <img :src="logo.src" :alt="logo.alt" />
+                <div class="logo-tile" :style="{ height: TILE_HEIGHT + 'px' }" aria-hidden="true">
+                  <div
+                    v-for="(logo, i) in CLOUD_LOGOS"
+                    :key="'b-' + i"
+                    class="logo-bubble"
+                    :style="bubbleStyle(logo)"
+                  >
+                    <img :src="logo.src" :alt="logo.alt" />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
-  </div>
+      </section>
+    </div>
 
-  <div class="boxmargin" style="width: 100%; height: 15vh"></div>
+    <div class="boxmargin" style="width: 100%; height: 15vh"></div>
 
-  <div class="tablefee">
-    <tablefee />
-  </div>
+    <div class="tablefee">
+      <tablefee />
+    </div>
 
-  <div class="boxmargin" style="width: 100%; height: 15vh"></div>
+    <div class="boxmargin" style="width: 100%; height: 15vh"></div>
 
-  <div class="footermemberproduct1">
-    <product4_footerlogomember
-      :subtitle="activeTab === 1
-        ? `  ການໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື (Fund Transfer via Mobile
+    <div class="footermemberproduct1">
+      <product4_footerlogomember
+        :subtitle="`  ການໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື (Fund Transfer via Mobile
             Application) ໂດຍນຳໃຊ້ລະບົບ LMPS ໃນການເຊື່ອມໂຍງຜ່ານ
             Applications ຂອງແຕ່ລະທະນາຄານທີ່ເປັນສະມາຊິກຂອງບໍລິສັດລາວ
             ເນເຊີນນໍເພເມັ້ນ ເນັດເວີກ ໃຫ້ສາມາດໃຊ້ຟັງຊັ່ນການດຳເນີນທຸລະກຳໂອນ
-            ເງິນຂ້າມທະນາຄານໄດ້.`
-        : `  ບໍລິການໂອນເງິນຂ້າມທະນາຄານ ສະກຸນເງິນຕາຕ່າງປະເທດ ຜ່ານ LAPNet
-            ໂດຍນຳໃຊ້ລະບົບ LMPS ໃນການເຊື່ອມໂຍງຜ່ານ Applications
-            ຂອງແຕ່ລະທະນາຄານທີ່ເປັນສະມາຊິກຂອງບໍລິສັດລາວ
-            ເນເຊີນນໍເພເມັ້ນ ເນັດເວີກ ໃຫ້ສາມາດໃຊ້ຟັງຊັ່ນການດຳເນີນທຸລະກຳໂອນ
-            ເງິນຕາຕ່າງປະເທດຂ້າມທະນາຄານໄດ້.`"
-      :features="[
-        ' ຂອບເຂດການໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື ແມ່ນສາມາດໂອນເງິນແຕ່ 1.000 ກີບ ຫາ 200.000.000 ກີບ/ຄັ້ງ. ',
-      ]"
-      :logos="memberLogos"
-    />
-  </div>
+            ເງິນຂ້າມທະນາຄານໄດ້.`"
+        :features="[
+          ' ຂອບເຂດການໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື ແມ່ນສາມາດໂອນເງິນແຕ່ 1.000 ກີບ ຫາ 200.000.000 ກີບ/ຄັ້ງ. ',
+        ]"
+        :logos="memberLogos"
+      />
+    </div>
+  </template>
+
+  <!-- ============================================================
+       TAB 2: ບໍລິການໂອນເງິນຂ້າມທະນາຄານ ສະກຸນເງິນຕາຕ່າງປະເທດ ຜ່ານ LAPNet
+       Content lives in product4_tab2.vue — edit there freely.
+       ============================================================ -->
+  <template v-else>
+    <product4_tab2 :member-logos="memberLogos" />
+  </template>
 
   <secondfooter />
 </template>
