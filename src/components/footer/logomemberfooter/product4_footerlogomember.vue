@@ -15,9 +15,7 @@
 
         <!-- 🔹 feature-list from props -->
         <ul class="feature-list">
-          <li v-for="(feature, index) in features" :key="index">
-            {{ feature }}
-          </li>
+          <li v-for="(feature, index) in features" :key="index" v-html="feature"></li>
         </ul>
 
       </div>

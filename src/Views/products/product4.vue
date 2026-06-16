@@ -1,11 +1,14 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
 
 import navbar from "../../components/miannavbar/main_navbar.vue";
 
 import tagproduct from "../../components/tagproduct/tagproduct.vue";
 import product4_footerlogomember from "../../components/footer/logomemberfooter/product4_footerlogomember.vue";
-
+import product4tech from "../techbenetfit/product4tech.vue";
 import logofloating from "../../components/logofloating/logofloating.vue";
 import tablefee from "../../components/tablefee/tablefee.vue";
 import hero_sectionproduct4 from "../../Views/products/product_herosection/hero_sectionproduct4.vue";
@@ -195,12 +198,16 @@ function bubbleStyle(logo) {
   };
 }
 
+const activeTab = ref(1);
+
 onMounted(() => {
   window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   fetchMemberLogos();
+  // Auto-select tab from ?tab=2 query (e.g. when launched from the home overlay)
+  const t = Number(route.query.tab);
+  if (t === 1 || t === 2) activeTab.value = t;
 });
 
-const activeTab = ref(1);
 const setTab = (n) => {
   activeTab.value = n;
   window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
@@ -251,6 +258,7 @@ const setTab = (n) => {
   <!-- ============================================================
        TAB 1: ໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື
        ============================================================ -->
+       
   <template v-if="activeTab === 1">
     <div class="benetfix">
       <product4tech />
