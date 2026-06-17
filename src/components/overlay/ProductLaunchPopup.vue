@@ -88,9 +88,12 @@ const props = defineProps({
   primaryHref: { type: String, default: "/products_service/mobile-transfer" },
   secondaryHref: { type: String, default: "" },
   showOncePerSession: { type: Boolean, default: true },
+  /** Hours to wait before showing again after dismissal. 0 disables cooldown. */
+  cooldownHours: { type: Number, default: 3 },
 });
 
 const SESSION_KEY = "lapnet-product-launch-seen";
+const COOLDOWN_KEY = "lapnet-product-launch-shown-at";
 
 const open = ref(false);
 const reduced = ref(false);
@@ -167,22 +170,27 @@ function startFireworks() {
     const id = window.setTimeout(fn, delay);
     fireworksTimers.push(id);
   };
-  // Opening celebration cascade — denser, faster
-  schedule(300);
-  schedule(550);
-  schedule(800);
-  schedule(1100);
-  schedule(1400, multiBurst);
-  schedule(1850, multiBurst);
-  schedule(2400);
-
-  // Ongoing repeating bursts — shorter gaps + always multi
-  const loop = () => {
-    multiBurst();
-    fireworksTimers.push(window.setTimeout(launchBurst, gsap.utils.random(250, 600)));
-    fireworksTimers.push(window.setTimeout(loop, gsap.utils.random(1600, 2800)));
-  };
-  fireworksTimers.push(window.setTimeout(loop, 3000));
+  // Opening celebration cascade only — no infinite loop (keeps the UI smooth)
+  schedule(200);
+  schedule(450);
+  schedule(750);
+  schedule(1050, multiBurst);
+  schedule(1500, multiBurst);
+  schedule(2000);
+  // Fade out the fireworks layer after the last burst's particles finish (~3.7s)
+  fireworksTimers.push(window.setTimeout(() => {
+    const container = fireworksRef.value;
+    if (!container) return;
+    gsap.to(container, {
+      opacity: 0,
+      duration: 0.6,
+      ease: "power1.out",
+      onComplete: () => {
+        container.innerHTML = "";
+        container.style.display = "none";
+      },
+    });
+  }, 3700));
 }
 
 function stopFireworks() {
@@ -220,6 +228,9 @@ async function runOpenAnimation() {
 function close() {
   if (props.showOncePerSession) {
     try { sessionStorage.setItem(SESSION_KEY, "1"); } catch { /* ignore */ }
+  }
+  if (props.cooldownHours > 0) {
+    try { localStorage.setItem(COOLDOWN_KEY, String(Date.now())); } catch { /* ignore */ }
   }
   const finish = () => {
     open.value = false;
@@ -287,6 +298,12 @@ watch(open, async (v) => {
 onMounted(() => {
   if (props.showOncePerSession) {
     try { if (sessionStorage.getItem(SESSION_KEY)) return; } catch { /* ignore */ }
+  }
+  if (props.cooldownHours > 0) {
+    try {
+      const last = Number(localStorage.getItem(COOLDOWN_KEY) || 0);
+      if (last && Date.now() - last < props.cooldownHours * 3600 * 1000) return;
+    } catch { /* ignore */ }
   }
   reduced.value = !!prefersReducedMotion();
   open.value = true;

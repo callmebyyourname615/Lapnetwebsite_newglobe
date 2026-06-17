@@ -6,6 +6,7 @@
   <ProductLaunchPopup
     v-if="route.path === '/'"
     :show-once-per-session="false"
+    :cooldown-hours="3"
     primary-href="/products_service/mobile-transfer?tab=2"
   />
 </template>
