@@ -38,16 +38,7 @@
           <span style="font-size: var(--fs-lapnet)">LAPNet</span>
         </div>
 
-        <nav class="nav" @keydown.esc="closeMenu">
-          <productDropdown />
-          <memberdropdown />
-
-          <router-link to="/bloggrid" class="navLink">ຂ່າວສານ ແລະ ກິດຈະກຳ</router-link>
-          <router-link to="/joinus" class="navLink">ຮ່ວມງານກັບເຮົາ</router-link>
-          <aboutusdropdown />
-
-          <router-link to="/contactus" class="navLink">ຕິດຕໍ່ພວກເຮົາ</router-link>
-        </nav>
+        <HomepageMegaNav class="nav" />
 
         <div class="actions">
           <!-- ✅ hamburger: click -> open sidebar -->
@@ -132,6 +123,7 @@ import homepage_sidebar from "../../components/sidebar/homepage_sidebar.vue"
 import atmmockup from "../../components/mockup/atmmockup.vue"
 import productDropdown from "../../components/dropdown-homepage/product-dropdown.vue"
 import memberdropdown from "../../components/dropdown-homepage/memberdropdown.vue"
+import HomepageMegaNav from "../../components/miannavbar/HomepageMegaNav.vue"
 import aboutusdropdown from "../../components/dropdown-homepage/aboutusdropdown.vue"
 onMounted(() => {
   window.scrollTo({
@@ -680,14 +672,21 @@ onBeforeUnmount(() => {
 }
 
 /* Nav */
+/* Unified Apple-style top bar — one container, white bg */
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 10px 10px 0;
+  gap: 1.25rem;
+  padding: 0.55rem 1.5rem;
+  margin: 0.75rem 1rem 0;
+  background: #ffffff;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
   position: relative;
   z-index: 999;
+  color: #1d1d1f;
   overflow: visible;
 }
 
@@ -699,6 +698,7 @@ onBeforeUnmount(() => {
   font-weight: 700;
   font-size: 13px;
   user-select: none;
+  color: #0b1020;
 }
 
 .brandDot {
@@ -709,60 +709,63 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 0 6px rgba(43, 109, 255, 0.16);
 }
 
+/* Inline nav (no extra pill container — everything lives on the topbar) */
 .nav {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 32px;
-  width: 65%;
-  padding: 10px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  background: rgba(5, 10, 30, 0.28);
-  backdrop-filter: blur(10px);
+  gap: 1.75rem;
+  flex: 1;
   position: relative;
   z-index: 999;
   overflow: visible;
 }
 
 .navLink {
-  color: #fff;
+  color: #1d1d1f;
   text-decoration: none;
   font-size: var(--fs-xs);
   font-weight: 500;
 }
 
 .btn {
-
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(15, 23, 42, 0.1);
   border-radius: 999px;
-  padding: 11px 16px;
+  padding: 9px 16px;
   font-weight: 600;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.88);
-  background: rgba(255, 255, 255, 0.06);
+  color: #1d1d1f;
+  background: #ffffff;
   cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: transform 0.18s ease, background 0.18s ease;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+.btn:hover {
+  background: #f5f7fb;
+  border-color: rgba(0, 51, 171, 0.2);
 }
 
 .actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .iconLink {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(10px);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #ffffff;
+  color: #1d1d1f;
   text-decoration: none;
+  transition: background 0.18s, border-color 0.18s;
+}
+.iconLink:hover {
+  background: #f5f7fb;
+  border-color: rgba(0, 51, 171, 0.2);
 }
 
 .hamburger {

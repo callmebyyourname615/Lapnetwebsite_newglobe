@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { gsap } from 'gsap'
 import sidebar from '../sidebar/sidebar.vue'
@@ -200,42 +200,110 @@ const closeDropdown = (dropdown) => {
   })
 }
 
-const handleMouseEnter = (event) => {
+/* =========================================================================
+ * Apple-style shared MEGA panel
+ * - One single panel below the navbar that morphs to show the active group.
+ * - Smooth GSAP height + fade + content stagger.
+ * - Closes when the mouse leaves both the trigger AND the panel.
+ * ========================================================================= */
+const activeMenu = ref(null)
+const megaPanelRef = ref(null)
+const megaInnerRef = ref(null)
+let megaCloseTimer = null
+let firstOpen = true
+
+const cancelMegaClose = () => {
+  if (megaCloseTimer) {
+    clearTimeout(megaCloseTimer)
+    megaCloseTimer = null
+  }
+}
+
+const openMega = (item) => {
+  cancelMegaClose()
+  if (!item?.children?.length) {
+    closeMega()
+    return
+  }
+  activeMenu.value = item
+}
+
+const closeMega = () => {
+  activeMenu.value = null
+}
+
+const handleGroupEnter = (item) => {
   if (!isDesktop()) return
+  openMega(item)
+}
 
-  const el = event.currentTarget
-  const dropdown = el.querySelector('.dropdown-menu')
-  const items = el.querySelectorAll('.dropdown-item')
+const handleGroupLeave = () => {
+  if (!isDesktop()) return
+  cancelMegaClose()
+  megaCloseTimer = setTimeout(closeMega, 140)
+}
 
-  if (!dropdown) return
+const handlePanelEnter = () => {
+  cancelMegaClose()
+}
 
-  // ✅ ปิดอันที่เคยเปิดอยู่ ถ้าไม่ใช่อันเดียวกัน
-  if (openDropdownEl.value && openDropdownEl.value !== dropdown) {
-    closeDropdown(openDropdownEl.value)
+const handlePanelLeave = () => {
+  cancelMegaClose()
+  megaCloseTimer = setTimeout(closeMega, 120)
+}
+
+watch(activeMenu, async (item) => {
+  const panel = megaPanelRef.value
+  const inner = megaInnerRef.value
+  if (!panel) return
+
+  if (!item) {
+    gsap.to(panel, {
+      autoAlpha: 0,
+      height: 0,
+      duration: 0.32,
+      ease: 'power3.inOut',
+      overwrite: 'auto',
+      onComplete: () => {
+        gsap.set(panel, { pointerEvents: 'none' })
+        firstOpen = true
+      },
+    })
+    return
   }
 
-  openDropdownEl.value = dropdown
-  openDropdown(dropdown, items)
-}
+  await nextTick()
+  // Measure content height for `height: auto` animation.
+  const targetHeight = inner ? inner.offsetHeight : 'auto'
 
-const handleMouseLeave = (event) => {
-  if (!isDesktop()) return
+  gsap.set(panel, { pointerEvents: 'auto' })
+  gsap.to(panel, {
+    autoAlpha: 1,
+    height: targetHeight,
+    duration: firstOpen ? 0.36 : 0.28,
+    ease: 'power3.out',
+    overwrite: 'auto',
+  })
 
-  const el = event.currentTarget
-  const dropdown = el.querySelector('.dropdown-menu')
-  if (!dropdown) return
+  const links = panel.querySelectorAll('.mega-link')
+  if (links.length) {
+    gsap.fromTo(
+      links,
+      { y: 14, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.4,
+        stagger: 0.035,
+        ease: 'power3.out',
+        overwrite: 'auto',
+      }
+    )
+  }
+  firstOpen = false
+})
 
-  // ✅ delay นิดนึง กันหลุดช่องว่างระหว่างปุ่มกับ dropdown
-  clearCloseTimer(dropdown)
-  const t = setTimeout(() => {
-    closeDropdown(dropdown)
-    if (openDropdownEl.value === dropdown) openDropdownEl.value = null
-  }, 120)
-
-  closeTimers.set(dropdown, t)
-}
-
-// ✅ เปลี่ยนหน้าแล้วปิด dropdown เสมอ กันค้าง
+// ✅ เปลี่ยนหน้าแล้วปิด dropdown / mega-panel เสมอ กันค้าง
 watch(
   () => route.fullPath,
   () => {
@@ -243,12 +311,16 @@ watch(
       closeDropdown(openDropdownEl.value)
       openDropdownEl.value = null
     }
+    closeMega()
   }
 )
 
 onMounted(() => {
   // ✅ กัน state ค้างตั้งแต่เริ่ม: ซ่อน + ห้ามรับเมาส์
   gsap.set('.dropdown-menu', { autoAlpha: 0, y: -8, scale: 0.98, pointerEvents: 'none' })
+  if (megaPanelRef.value) {
+    gsap.set(megaPanelRef.value, { autoAlpha: 0, height: 0, pointerEvents: 'none' })
+  }
 
   const tl = gsap.timeline({
     defaults: { duration: 0.8, ease: 'power3.out' }
@@ -291,23 +363,22 @@ onMounted(() => {
       <span class="nav-toggle-label">ເມນູ</span>
     </button>
 
-    <!-- RIGHT: DESKTOP NAV -->
+    <!-- RIGHT: DESKTOP NAV (Apple-style triggers) -->
     <nav class="nav-right">
       <div
         v-for="(item, index) in menuItems"
         :key="index"
         class="nav-group"
-        @mouseenter="handleMouseEnter"
-        @mouseleave="handleMouseLeave"
+        @mouseenter="handleGroupEnter(item)"
+        @mouseleave="handleGroupLeave"
       >
         <button
           v-if="item.children"
           class="nav-item"
           type="button"
-          :class="{ 'nav-cta': item.isCta, 'has-dropdown': item.children }"
+          :class="{ 'nav-cta': item.isCta, 'has-dropdown': true, 'is-active': activeMenu === item }"
         >
           {{ item.label }}
-          <span class="dropdown-arrow">▼</span>
         </button>
 
         <RouterLink
@@ -318,22 +389,40 @@ onMounted(() => {
         >
           {{ item.label }}
         </RouterLink>
-
-        <!-- DROPDOWN MENU -->
-        <div v-if="item.children" class="dropdown-menu">
-          <div class="dropdown-blur-bg"></div>
-          <ul class="dropdown-list">
-            <li v-for="(child, cIndex) in item.children" :key="cIndex" class="dropdown-item">
-              <RouterLink class="dropdown-link" :to="child.to">
-                <i :class="['dropdown-icon', child.icon]" aria-hidden="true"></i>
-                {{ child.label }}
-              </RouterLink>
-            </li>
-          </ul>
-        </div>
       </div>
     </nav>
   </header>
+
+  <!-- ===== Apple-style MEGA PANEL ===== -->
+  <div
+    ref="megaPanelRef"
+    class="mega-panel"
+    @mouseenter="handlePanelEnter"
+    @mouseleave="handlePanelLeave"
+  >
+    <div ref="megaInnerRef" class="mega-inner">
+      <div v-if="activeMenu" class="mega-content">
+        <p class="mega-eyebrow">{{ activeMenu.label }}</p>
+        <ul class="mega-grid">
+          <li
+            v-for="(child, cIndex) in activeMenu.children"
+            :key="cIndex"
+            class="mega-link-wrap"
+          >
+            <RouterLink class="mega-link" :to="child.to">
+              <i
+                v-if="child.icon"
+                :class="['mega-icon', child.icon]"
+                aria-hidden="true"
+              ></i>
+              <span class="mega-label">{{ child.label }}</span>
+              <span class="mega-arrow" aria-hidden="true">›</span>
+            </RouterLink>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
 
   <!-- MOBILE SIDEBAR -->
   <sidebar ref="sidebarRef" />
@@ -656,5 +745,140 @@ onMounted(() => {
   .nav-toggle {
     display: inline-flex;
   }
+}
+
+/* =========================================================================
+   Apple-style MEGA panel
+   ========================================================================= */
+.mega-panel {
+  position: fixed;
+  top: 11vh; /* sits right under the nav-root */
+  left: 0;
+  right: 0;
+  z-index: 49;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  background: rgba(5, 11, 27, 0.92);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border-top: 1px solid rgba(80, 170, 255, 0.16);
+  border-bottom: 1px solid rgba(80, 170, 255, 0.16);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.mega-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2.25rem 2.5rem 2.5rem;
+}
+
+.mega-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.mega-eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #94a3c4;
+}
+
+.mega-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem 1.5rem;
+}
+@media (min-width: 1100px) {
+  .mega-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.mega-link-wrap { margin: 0; }
+
+.mega-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  color: #d3e1ff;
+  text-decoration: none;
+  font-size: 1.02rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  line-height: 1.3;
+  transition: background 0.25s, color 0.25s, transform 0.25s;
+}
+.mega-link:hover {
+  background: linear-gradient(90deg, rgba(0, 120, 255, 0.18), rgba(0, 120, 255, 0));
+  color: #ffffff;
+  transform: translateX(4px);
+}
+.mega-link:hover .mega-arrow {
+  opacity: 1;
+  transform: translateX(2px);
+  color: #00c6ff;
+}
+
+.mega-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(0, 51, 171, 0.4), rgba(0, 198, 255, 0.18));
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  color: #b3e5ff;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+  transition: transform 0.25s;
+}
+.mega-link:hover .mega-icon {
+  transform: scale(1.06);
+}
+
+.mega-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.mega-arrow {
+  font-size: 1.2rem;
+  color: rgba(180, 220, 255, 0.4);
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s, color 0.25s;
+}
+
+/* Active-trigger underline (subtle hint while the panel is open) */
+.nav-item.is-active {
+  color: #ffffff;
+}
+.nav-item.is-active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  width: 24px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #0078ff, #00c6ff);
+  transform: translateX(-50%);
+}
+
+@media (max-width: 768px) {
+  .mega-panel { display: none; }
 }
 </style>
