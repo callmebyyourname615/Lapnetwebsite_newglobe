@@ -128,7 +128,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #eff6ff, #ffffff);
+  background: #fcfdff;
   box-sizing: border-box;
 }
 

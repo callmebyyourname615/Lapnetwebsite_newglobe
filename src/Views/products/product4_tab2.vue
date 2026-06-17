@@ -315,26 +315,24 @@ function bubbleStyle(logo) {
               <span class="lf-rate-label">ຂອງມູນຄ່າໂອນ</span>
             </div>
 
-            <ul class="lf-fee-list">
-              <li class="lf-fee-item">
-                <span class="lf-code lf-code-sm">USD</span>
-                <span class="lf-fee-range">
-                  <span class="lf-fee-num"><strong>1</strong> USD</span>
-                  <span class="lf-fee-arrow">→</span>
-                  <span class="lf-fee-num"><strong>30</strong> USD</span>
-                </span>
-                <span class="lf-fee-note">ຕໍ່ທຸລະກຳ</span>
-              </li>
-              <li class="lf-fee-item">
-                <span class="lf-code lf-code-sm">THB</span>
-                <span class="lf-fee-range">
-                  <span class="lf-fee-num"><strong>30</strong> THB</span>
-                  <span class="lf-fee-arrow">→</span>
-                  <span class="lf-fee-num"><strong>1,000</strong> THB</span>
-                </span>
-                <span class="lf-fee-note">ຕໍ່ທຸລະກຳ</span>
-              </li>
-            </ul>
+            <div class="lf-table lf-table--fees" role="table">
+              <div class="lf-row lf-row-head" role="row">
+                <div role="columnheader">ສະກຸນເງິນ</div>
+                <div role="columnheader">ຄ່າທຳນຽມເລີ່ມຕົ້ນ</div>
+                <div role="columnheader">ຄ່າທຳນຽມສູງສຸດ</div>
+              </div>
+              <div class="lf-row" role="row">
+                <div role="cell"><span class="lf-code">USD</span></div>
+                <div role="cell"><strong>1</strong> <span class="lf-unit">USD</span></div>
+                <div role="cell"><strong>30</strong> <span class="lf-unit">USD</span></div>
+              </div>
+              <div class="lf-row" role="row">
+                <div role="cell"><span class="lf-code">THB</span></div>
+                <div role="cell"><strong>30</strong> <span class="lf-unit">THB</span></div>
+                <div role="cell"><strong>1,000</strong> <span class="lf-unit">THB</span></div>
+              </div>
+            </div>
+            <p class="lf-fee-foot">ຕໍ່ທຸລະກຳ</p>
           </article>
         </div>
 
@@ -1054,46 +1052,10 @@ function bubbleStyle(logo) {
   font-weight: 500;
 }
 
-/* ----- Fee list ----- */
-.lf-fee-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.lf-fee-item {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 0.85rem;
-  padding: 0.85rem 1rem;
-  border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid rgba(15, 23, 42, 0.05);
-}
-
-.lf-fee-range {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #0b1020;
-  font-size: 0.95rem;
-}
-
-.lf-fee-range strong {
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-.lf-fee-arrow {
-  color: #94a3b8;
-  font-weight: 500;
-}
-
-.lf-fee-note {
+/* ----- Fee table footer caption ----- */
+.lf-fee-foot {
+  margin: 0.65rem 0 0;
+  text-align: right;
   color: #94a3b8;
   font-size: 0.78rem;
   font-weight: 500;

@@ -337,7 +337,7 @@ onMounted(() => {
 
   <!-- MOBILE SIDEBAR -->
   <sidebar ref="sidebarRef" />
-  <div class="box-margin" style="width: 100%; height: 15vh"></div>
+  <div class="box-margin" style="width: 100%; height: 11vh"></div>
 
   <!-- OVERLAY NAVBAR -->
   <overlaynavbar
@@ -359,8 +359,8 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  padding: 0.75rem 2.5rem;
-  height: 15vh;
+  padding: 0.55rem 2.5rem;
+  height: 11vh;
 
   background: linear-gradient(
     95deg,
