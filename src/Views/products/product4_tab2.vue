@@ -5,6 +5,14 @@ import product4_footerlogomember from "../../components/footer/logomemberfooter/
 import product5tech from "../techbenetfit/product5tech.vue";
 import tablefee_tab2 from "../../components/tablefee/tablefee_tab2.vue";
 import hero_sectionproduct4_tab2 from "../../Views/products/product_herosection/hero_sectionproduct4_tab2.vue";
+import ScrollspySidebar from "../../components/scrollspy/ScrollspySidebar.vue";
+
+const sectionsTab2 = [
+  { id: "intro", label: "ບົດແນະນຳ", icon: "overview" },
+  { id: "condition", label: "ເງື່ອນໄຂ", icon: "tag" },
+  { id: "limits", label: "ວົງເງິນ & ຄ່າທຳນຽມ", icon: "layers" },
+  { id: "member", label: "ສະມາຊິກ", icon: "box" },
+];
 
 const props = defineProps({
   memberLogos: { type: Array, default: () => [] },
@@ -189,13 +197,15 @@ function bubbleStyle(logo) {
 
 <template>
   <div class="tab2-root">
-    <div class="productdiscription">
+    <ScrollspySidebar :items="sectionsTab2" />
+
+    <div id="intro" class="productdiscription">
       <hero_sectionproduct4_tab2 />
     </div>
 
 
 
-    <div class="condition_for_use">
+    <div id="condition" class="condition_for_use">
       <section class="orbit-section">
         <!-- Orbit system -->
         <div class="orbit-system" aria-hidden="true">
@@ -256,7 +266,7 @@ function bubbleStyle(logo) {
     </div>
 
     <!-- ===== Limits & Fees Section ===== -->
-    <section class="lf-section">
+    <section id="limits" class="lf-section">
       <div class="lf-inner">
         <header class="lf-head">
         
@@ -391,7 +401,7 @@ function bubbleStyle(logo) {
 
    
 
-    <div class="footermemberproduct1">
+    <div id="member" class="footermemberproduct1">
       <product4_footerlogomember
         :subtitle="`ບໍລິການໂອນເງິນ ສະກຸນເງິນຕາຕ່າງປະເທດ ຂ້າມທະນາຄານ ເພື່ອເພີ່ມທາງເລືອກ ແລະ ຕອບໂຈດຄວາມຕ້ອງການດ້ານທຸລະກຳການເງິນໃຫ້ມີຄວາມຫຼາກຫຼາຍ ແລະ ຄ່ອງຕົວຂຶ້ນກວ່າເກົ່າ ໂດຍສະເພາະສອງສະກຸນເງິນ ຄື: ສະກຸນເງິນ ໂດລາສະຫະລັດ (USD) ແລະ ສະກຸນເງິນ ບາດ (THB).`"
         :features="[

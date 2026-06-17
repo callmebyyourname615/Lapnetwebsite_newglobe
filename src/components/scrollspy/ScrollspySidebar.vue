@@ -28,7 +28,7 @@ const props = defineProps({
 const active = ref(props.items[0]?.id || "");
 const progress = ref(0);
 const triangleY = ref(0);
-const visible = ref(false);
+const visible = ref(true);
 const cardRef = ref(null);
 const navRef = ref(null);
 const fillRef = ref(null);
@@ -91,16 +91,16 @@ function onScroll() {
   // Show/hide based on scroll direction (with a small threshold to ignore jitter).
   const delta = y - lastScrollY;
   if (Math.abs(delta) > SCROLL_DELTA) {
-    if (delta > 0 && y > SHOW_AFTER_PX && !suppressShow) {
-      setVisible(true);  // scrolling DOWN past hero → reveal
-    } else if (delta < 0) {
-      setVisible(false); // scrolling UP → hide
+    if (delta > 0) {
+      setVisible(false); // scrolling DOWN → hide
+    } else if (delta < 0 && !suppressShow) {
+      setVisible(true);  // scrolling UP → reveal
     }
     lastScrollY = y;
   }
 
-  // If user scrolls back to the very top, force-hide.
-  if (y < SHOW_AFTER_PX / 2) setVisible(false);
+  // Force show at the very top of the page (where the user just landed).
+  if (y < 40 && !suppressShow) setVisible(true);
 
   // Recompute fill so it tracks the current active item's centre even when
   // the page is resized / first item shifts due to lazy content loading.
@@ -208,13 +208,20 @@ onMounted(async () => {
   await nextTick();
   setupObserver();
 
-  // Start hidden off-screen — revealed on scroll-down behaviour.
+  // Start visible — hidden on scroll-down, shown again on scroll-up.
   ctx = gsap.context(() => {
     if (cardRef.value) {
       gsap.set(cardRef.value, {
-        x: props.side === "right" ? 60 : -60,
+        x: 0,
+        opacity: 1,
+        pointerEvents: "auto",
+      });
+      // Subtle entrance slide-in for the first page load.
+      gsap.from(cardRef.value, {
+        x: props.side === "right" ? 40 : -40,
         opacity: 0,
-        pointerEvents: "none",
+        duration: 0.7,
+        ease: "power3.out",
       });
     }
     if (triangleRef.value) {
@@ -349,7 +356,7 @@ function iconPath(name) {
 .ss-sidebar {
   position: fixed;
   z-index: 40;
-  width: 210px;
+  width: 280px;
   pointer-events: none; /* card itself re-enables */
 }
 .ss-left { left: 0; }
@@ -364,96 +371,96 @@ function iconPath(name) {
 .ss-card {
   pointer-events: auto;
   background: #ffffff;
-  padding: 0.85rem 0.85rem 1rem;
+  padding: 1.25rem 1.25rem 1.5rem;
   box-shadow:
     0 30px 60px -30px rgba(17, 17, 17, 0.18),
     0 2px 8px rgba(17, 17, 17, 0.05);
   border: 1px solid rgba(15, 23, 42, 0.05);
 }
 .ss-left .ss-card {
-  border-radius: 0 24px 24px 0;
+  border-radius: 0 32px 32px 0;
   border-left: 0;
 }
 .ss-right .ss-card {
-  border-radius: 24px 0 0 24px;
+  border-radius: 32px 0 0 32px;
   border-right: 0;
 }
 
 .ss-brand {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.45rem 0.65rem;
-  border-radius: 12px;
+  gap: 0.7rem;
+  padding: 0.65rem 0.95rem;
+  border-radius: 14px;
   border: 1px dashed #dedede;
-  font-size: 0.78rem;
+  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: #111;
 }
 .ss-brand-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 999px;
   background: linear-gradient(135deg, #0033ab, #00c6ff);
-  box-shadow: 0 0 0 3px rgba(0, 120, 255, 0.15);
+  box-shadow: 0 0 0 4px rgba(0, 120, 255, 0.15);
 }
 
 .ss-divider {
   height: 0;
-  margin: 0.85rem 0;
+  margin: 1rem 0;
   border-top: 1px dashed #e5e5e5;
 }
 
 .ss-nav {
   position: relative;
-  padding-left: 1.1rem;
+  padding-left: 1.5rem;
 }
 
 /* progress track — spans the nav so triangle stays within it for every item */
 .ss-track {
   position: absolute;
-  left: 4px;
+  left: 6px;
   top: 0;
   bottom: 0;
-  width: 2px;
+  width: 3px;
   background: #ececec;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 .ss-fill {
   position: absolute;
   left: 0;
   top: 0;
-  width: 2px;
+  width: 3px;
   height: 0;
   background: linear-gradient(180deg, #0033ab, #00c6ff);
-  border-radius: 2px;
+  border-radius: 3px;
 }
 .ss-track-cap {
   position: absolute;
   left: -3px;
-  font-size: 9px;
-  letter-spacing: 0.14em;
+  font-size: 10px;
+  letter-spacing: 0.16em;
   color: #bdbdbd;
   font-weight: 600;
 }
-.ss-track-cap--start { top: -20px; }
-.ss-track-cap--end { bottom: -20px; }
+.ss-track-cap--start { top: -22px; }
+.ss-track-cap--end { bottom: -22px; }
 
 /* triangle marker */
 /* Triangle is GSAP-centered via yPercent:-50; do NOT set CSS transform
    here or scale/y animations will fight it. */
 .ss-triangle {
   position: absolute;
-  left: -2px;
+  left: -1px;
   top: 0;
   width: 0;
   height: 0;
-  border-top: 6px solid transparent;
-  border-bottom: 6px solid transparent;
-  border-left: 8px solid #0033ab;
-  filter: drop-shadow(0 1px 2px rgba(0, 51, 171, 0.35));
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 11px solid #0033ab;
+  filter: drop-shadow(0 1px 3px rgba(0, 51, 171, 0.4));
   will-change: transform;
 }
 
@@ -461,9 +468,9 @@ function iconPath(name) {
 .ss-item {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  padding: 0.6rem 0.7rem;
-  border-radius: 12px;
+  gap: 0.9rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 14px;
   color: #111;
   text-decoration: none;
   transition: background 0.2s;
@@ -471,22 +478,22 @@ function iconPath(name) {
 }
 .ss-item:hover { background: #f6f6f6; }
 .ss-item--active { background: #f1f1f1; }
-.ss-icon { width: 18px; height: 18px; flex-shrink: 0; }
+.ss-icon { width: 22px; height: 22px; flex-shrink: 0; }
 .ss-label {
   flex: 1;
-  font-size: 0.84rem;
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.005em;
 }
 .ss-badge {
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: #7a7a7a;
   background: #fff;
   border: 1px solid #e5e5e5;
-  border-radius: 6px;
-  padding: 0.1rem 0.4rem;
+  border-radius: 8px;
+  padding: 0.15rem 0.5rem;
 }
 
 /* ===== Mobile horizontal tracker (sticky top) ===== */
