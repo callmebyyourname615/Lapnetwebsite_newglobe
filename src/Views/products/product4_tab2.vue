@@ -312,7 +312,7 @@ function bubbleStyle(logo) {
 
             <div class="lf-rate">
               <span class="lf-rate-value">0.3<small>%</small></span>
-              <span class="lf-rate-label">ຂອງມູນຄ່າໂອນ</span>
+              <span class="lf-rate-label">ຂອງມູນຄ່າໂອນ ໂດຍມີເງື່ອນໄຂກຳນົດຂັ້ນຕ່ຳ ແລະ ຂັ້ນສູງສຸດ ດັ່ງນີ້ :</span>
             </div>
 
             <div class="lf-table lf-table--fees" role="table">
@@ -1048,7 +1048,7 @@ function bubbleStyle(logo) {
 
 .lf-rate-label {
   color: #475569;
-  font-size: 0.95rem;
+  font-size: 0.89rem;
   font-weight: 500;
 }
 
