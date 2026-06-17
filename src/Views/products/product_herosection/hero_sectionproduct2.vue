@@ -197,10 +197,10 @@ onBeforeUnmount(() => {
 <style scoped>
 /* ✅ style ทั้งหมดของคุณเหมือนเดิม (ผมไม่แตะ) */
 .hero {
-  min-height: 100vh;
+  min-height: 78vh;
   display: flex;
   align-items: center;
-  padding: 4rem 6vw;
+  padding: 2.25rem 6vw;
   background: linear-gradient(135deg, #ffffff 0%, #ffffff 45%, #ffffff 100%);
   color: #0b1020;
   position: relative;

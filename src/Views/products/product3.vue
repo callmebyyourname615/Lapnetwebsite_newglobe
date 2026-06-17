@@ -194,7 +194,7 @@ const heroVideo = "/videos/productvdo-background.mp4";
     <tablefee />
   </div>
 
-  <div class="stepwork" style="margin-top: 70px">
+  <div class="stepwork" style="margin-top: 0">
     <stepwork />
   </div>
 

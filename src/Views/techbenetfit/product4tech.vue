@@ -182,7 +182,8 @@ onMounted(() => {
 <style scoped>
 .tech-section {
   width: 100%;
-  height: 650px; /* Slightly increased height so large cards are not clipped */
+  height: auto;
+  padding: 3rem 0 3.5rem;
   position: relative;
   overflow: hidden;
   color: #f7fbff;
@@ -227,14 +228,14 @@ onMounted(() => {
   position: relative;
   z-index: 1;
   max-width: 1160px;
-  height: 100%;
+  height: auto;
   margin: 0 auto;
-  padding: 60px 32px;
+  padding: 16px 32px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 40px;
+  gap: 24px;
 }
 
 /* Main heading */

@@ -316,13 +316,13 @@ const setTab = (n) => {
       </section>
     </div>
 
-    <div class="boxmargin" style="width: 100%; height: 15vh"></div>
+    <div class="boxmargin" style="width: 100%; height: 5vh"></div>
 
     <div class="tablefee">
       <tablefee />
     </div>
 
-    <div class="boxmargin" style="width: 100%; height: 15vh"></div>
+    <div class="boxmargin" style="width: 100%; height: 5vh"></div>
 
     <div class="footermemberproduct1">
       <product4_footerlogomember
@@ -365,8 +365,8 @@ const setTab = (n) => {
   display: flex;
   justify-content: center;
   gap: 0.5rem;
-  padding: 6rem 1rem 2.5rem;
-  margin-bottom: -1.5rem;
+  padding: 2.5rem 1rem 2.5rem;
+  margin-bottom: 0;
   background: transparent;
 }
 .product-tab {
@@ -454,7 +454,7 @@ const setTab = (n) => {
   width: 100%;
   overflow: hidden;
   background: #ffffff;
-  min-height: 560px;
+  min-height: auto;
 }
 
 .intg-grid {
@@ -472,8 +472,8 @@ const setTab = (n) => {
   max-width: 1180px;
   display: flex;
   flex-direction: column;
-  gap: 3rem;
-  padding: 5rem 1.5rem;
+  gap: 2rem;
+  padding: 2.5rem 1.5rem;
 }
 
 @media (min-width: 768px) {
@@ -481,7 +481,7 @@ const setTab = (n) => {
     flex-direction: row;
     align-items: center;
     gap: 2.5rem;
-    padding: 7rem 1.5rem;
+    padding: 3.5rem 1.5rem;
   }
 }
 
@@ -525,7 +525,7 @@ const setTab = (n) => {
 
 .intg-right {
   width: 100%;
-  height: clamp(380px, 56vw, 580px);
+  height: clamp(300px, 44vw, 460px);
   position: relative;
 }
 

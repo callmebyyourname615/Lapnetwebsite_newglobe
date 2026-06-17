@@ -68,7 +68,7 @@ const containerStyle = computed(() => ({
 /* ===== Layout base ===== */
 .hero {
   width: 100%;
-  min-height: 260px;
+  min-height: 180px;
   display: flex;
   align-items: flex-end;
   position: relative;
@@ -91,7 +91,7 @@ const containerStyle = computed(() => ({
 .hero__overlay {
   width: 100%;
   background: transparent;
-  padding: clamp(2rem, 4vw, 3.5rem) 1.5rem 5.5rem;
+  padding: clamp(1.25rem, 2.5vw, 2rem) 1.5rem 2.25rem;
   box-sizing: border-box;
 }
 
@@ -157,13 +157,13 @@ const containerStyle = computed(() => ({
     white-space: normal; /* allow wrap on very small screens */
   }
   .hero__overlay {
-    padding: 1.5rem 1rem 10rem;
+    padding: 1rem 1rem 1.75rem;
   }
 }
 
 @media (max-width: 480px) {
   .hero__overlay {
-    padding: 1.5rem 1rem 10rem;
+    padding: 1rem 1rem 1.75rem;
   }
 
   .hero__title {

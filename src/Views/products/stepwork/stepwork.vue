@@ -3,12 +3,6 @@
     <div class="hero-inner">
       <!-- Hero text -->
       <header class="hero-copy">
-        <!-- LOGO instead of text eyebrow -->
-        <div class="eyebrow">
-          <img src="/logolapnet/logolapnet.PNG" alt="Logo" />
-          <img src="/logolapnet/textlogo.PNG" alt="">
-        </div>
-
         <h1 class="hero-heading">ຂັ້ນຕອນການໂອນເງິນຂ້າມທະນາຄານຜ່ານຕູ້ ATM</h1>
         <p class="hero-subtitle">
           ການໂອນເງິນຂ້າມທະນາຄານຜ່ານຕູ້ ATM ສາມາດເຮັດທຸລະກຳການໂອນໄດ້ທີ່ຕູ້ ATM ດັ່ງລຸ່ມນີ້:
@@ -83,15 +77,6 @@ onMounted(() => {
     /* -----------------------------
      * Hero intro animations
      * --------------------------- */
-    gsap.from('.eyebrow img', {
-      opacity: 0,
-      y: -20,
-      rotate: -8,
-      duration: 0.9,
-      ease: 'power3.out',
-      stagger: 0.1,
-    })
-
     gsap.from('.hero-heading', {
       opacity: 0,
       y: 40,
@@ -201,8 +186,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .hero-roadmap {
   position: relative;
-  min-height: 100vh;
-  padding: 5rem 8vw 5rem;
+  min-height: auto;
+  padding: 1.75rem 8vw 2rem;
   background: radial-gradient(circle at top left, #e0f2ff 0, #f5f7ff 45%, #e1e9ff 100%);
   color: #0f172a;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI',
@@ -253,8 +238,8 @@ onBeforeUnmount(() => {
 /* Timeline layout */
 .timeline-wrapper {
   position: relative;
-  margin-top: 4rem;
-  padding-bottom: 2rem;
+  margin-top: 1.25rem;
+  padding-bottom: 0.5rem;
 }
 
 .timeline-line {
@@ -276,7 +261,7 @@ onBeforeUnmount(() => {
 
 .timeline-item {
   position: relative;
-  margin: 3rem 0;
+  margin: 1.5rem 0;
 }
 
 /* Cards */

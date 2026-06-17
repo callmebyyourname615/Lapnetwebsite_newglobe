@@ -170,27 +170,23 @@ function startFireworks() {
     const id = window.setTimeout(fn, delay);
     fireworksTimers.push(id);
   };
-  // Opening celebration cascade only — no infinite loop (keeps the UI smooth)
+  // Opening celebration cascade
   schedule(200);
   schedule(450);
   schedule(750);
   schedule(1050, multiBurst);
   schedule(1500, multiBurst);
   schedule(2000);
-  // Fade out the fireworks layer after the last burst's particles finish (~3.7s)
-  fireworksTimers.push(window.setTimeout(() => {
-    const container = fireworksRef.value;
-    if (!container) return;
-    gsap.to(container, {
-      opacity: 0,
-      duration: 0.6,
-      ease: "power1.out",
-      onComplete: () => {
-        container.innerHTML = "";
-        container.style.display = "none";
-      },
-    });
-  }, 3700));
+  // Ongoing ambient bursts while the overlay is open
+  const loop = () => {
+    if (!fireworksRef.value || !open.value) return;
+    launchBurst();
+    if (Math.random() > 0.5) {
+      fireworksTimers.push(window.setTimeout(launchBurst, gsap.utils.random(250, 600)));
+    }
+    fireworksTimers.push(window.setTimeout(loop, gsap.utils.random(1800, 3200)));
+  };
+  fireworksTimers.push(window.setTimeout(loop, 2800));
 }
 
 function stopFireworks() {
