@@ -1611,6 +1611,7 @@ function bubbleStyle(logo) {
 .footermemberproduct1 {
   width: 100%;
   height: auto;
+
 }
 
 .benetfix {

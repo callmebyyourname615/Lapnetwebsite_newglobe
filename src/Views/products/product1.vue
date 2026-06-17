@@ -6,6 +6,13 @@ import product1_footerlogomember from "../../components/footer/logomemberfooter/
 import hero_sectionproduct1 from "./product_herosection/hero_sectionproduct1.vue";
 import secondfooter from "../../components/footer/mainfooter/secondfooter.vue";
 import product1tech from "../techbenetfit/product1tech.vue";
+import ScrollspySidebar from "../../components/scrollspy/ScrollspySidebar.vue";
+
+const sections = [
+  { id: "intro", label: "ບົດແນະນຳ", icon: "overview" },
+  { id: "benefit", label: "ຜົນປະໂຫຍດ", icon: "spark" },
+  { id: "member", label: "ສະມາຊິກ", icon: "box" },
+];
 
 // -------------------- Env-only API base (Vite) --------------------
 // Required in .env:
@@ -161,15 +168,17 @@ onMounted(() => {
     background-image="/overlaynav/product/navigatorcontent-bg.png"
   />
 
-  <div class="productdiscription">
+  <ScrollspySidebar :items="sections" />
+
+  <div id="intro" class="productdiscription">
     <hero_sectionproduct1 />
   </div>
 
-  <div class="benetfix">
+  <div id="benefit" class="benetfix">
     <product1tech />
   </div>
 
-  <div class="footermemberproduct1">
+  <div id="member" class="footermemberproduct1">
     <product1_footerlogomember :logos="memberLogos" />
   </div>
 

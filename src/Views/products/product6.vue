@@ -1,5 +1,14 @@
 <script setup lang="ts">
 import navbar from "../../components/miannavbar/main_navbar.vue";
+import ScrollspySidebar from "../../components/scrollspy/ScrollspySidebar.vue";
+
+const sections = [
+  { id: "intro", label: "ບົດແນະນຳ", icon: "overview" },
+  { id: "benefit", label: "ຜົນປະໂຫຍດ", icon: "spark" },
+  { id: "steps", label: "ຂັ້ນຕອນ", icon: "box" },
+  { id: "desc", label: "ລາຍລະອຽດ", icon: "tag" },
+  { id: "member", label: "ສະມາຊິກ", icon: "box" },
+];
 import product6benetfit from "../techbenetfit/product6benetfit.vue";
 import crossborderbtn from "../../components/button/crossborderbtn.vue";
 import product6tech from "../techbenetfit/product6tech.vue";
@@ -436,15 +445,17 @@ watch(
     background-image="/overlaynav/product/navigatorcontent-bg.png"
   />
 
-  <div class="productdiscription">
+  <ScrollspySidebar :items="sections" />
+
+  <div id="intro" class="productdiscription">
     <hero_sectionproduct6 />
   </div>
 
-  <div class="benetfix">
+  <div id="benefit" class="benetfix">
     <product6benetfit />
   </div>
 
-  <section ref="timelineSection" class="process-showcase">
+  <section id="steps" ref="timelineSection" class="process-showcase">
     <div class="process-shell">
       <div class="process-header">
         <span class="process-eyebrow">How It Works</span>
@@ -511,11 +522,11 @@ watch(
     </div>
   </div>
 
-  <div class="descriptionforcustomer">
+  <div id="desc" class="descriptionforcustomer">
     <product6tech />
   </div>
 
-  <div class="footermember">
+  <div id="member" class="footermember">
     <!-- ✅ ส่ง logos ที่ get จาก API (crossborderproduct=1) -->
     <product6_footerlogomember :subtitle="`  ຊຳລະຂ້າມແດນຜ່ານ QR CODE ບໍລິສັດ LAPNet ໄດ້ຕໍ່ຍອດການພັດທະນາລະບົບຊຳລະຂ້າມທະນາຄານເທິງມືຖື (LMPS) ເພື່ອຂະຫຍາຍຜະລິດຕະພັນ ຊຳລະຂ້າມທະນາຄານ ໃຫ້ສາມາດຮອງຮັບການ ຊຳລະ ຄ່າສິນຄ້າ - ບໍລິການ ລະຫວ່າງປະເທດ`"
       :features="[

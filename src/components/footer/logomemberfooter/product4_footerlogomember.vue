@@ -123,8 +123,8 @@ onMounted(async () => {
 <style scoped>
 /* (styles unchanged) */
 .section {
-  min-height: 100vh;
-  padding: 40px 20px;
+  min-height: auto;
+  padding: 24px 20px 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,7 +135,7 @@ onMounted(async () => {
 .main-card {
   width: 100%;
   max-width: 1280px;
-  min-height: 560px;
+  min-height: auto;
   border-radius: 32px;
   background: #ffffff;
   box-shadow:
@@ -147,10 +147,10 @@ onMounted(async () => {
 }
 
 .left-pane {
-  padding: 40px 30px 32px;
+  padding: 28px 30px 24px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
   background: radial-gradient(circle at top left, #e0f2fe 0%, #ffffff 55%);
 }
 
@@ -219,7 +219,7 @@ onMounted(async () => {
 
 .right-pane {
   position: relative;
-  padding: 36px 26px;
+  padding: 24px 26px;
   background: radial-gradient(circle at 10% 0%, #1d4ed8 0%, #020617 65%);
   overflow: hidden;
 }
@@ -346,11 +346,11 @@ onMounted(async () => {
   }
 
   .left-pane {
-    padding: 46px 40px;
+    padding: 30px 40px;
   }
 
   .right-pane {
-    padding: 40px 32px;
+    padding: 26px 32px;
   }
 }
 

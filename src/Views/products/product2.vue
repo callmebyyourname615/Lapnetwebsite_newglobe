@@ -4,6 +4,14 @@ import { ref, onMounted } from "vue";
 import navbar from "../../components/miannavbar/main_navbar.vue";
 
 import product2tech from "../techbenetfit/product2tech.vue";
+import ScrollspySidebar from "../../components/scrollspy/ScrollspySidebar.vue";
+
+const sections = [
+  { id: "intro", label: "ບົດແນະນຳ", icon: "overview" },
+  { id: "benefit", label: "ຜົນປະໂຫຍດ", icon: "spark" },
+  { id: "condition", label: "ເງື່ອນໄຂ", icon: "tag" },
+  { id: "member", label: "ສະມາຊິກ", icon: "box" },
+];
 import tagproduct from "../../components/tagproduct/tagproduct.vue";
 import product2_footerlogomember from "../../components/footer/logomemberfooter/product2_footerlogomember.vue";
 import cardscrolling from "./cardscrolling/cardscrolling.vue";
@@ -166,15 +174,17 @@ const heroVideo = "/videos/productvdo-background.mp4";
 
   <herosection />
 
-  <div class="productdiscription">
+  <ScrollspySidebar :items="sections" />
+
+  <div id="intro" class="productdiscription">
     <hero_sectionproduct2 />
   </div>
 
-  <div class="benetfix">
+  <div id="benefit" class="benetfix">
     <product2tech />
   </div>
 
-  <div class="cardscrolling">
+  <div id="condition" class="cardscrolling">
     <cardscrolling
       title="ເງື່ອນໄຂການບໍລິການ"
       :subtitle="` ການຖອນເງິນສົດຜ່ານຕູ້ເອທີເອັມ ແມ່ນນຳໃຊ້ລະບົບແລັບໃນການ
@@ -189,7 +199,7 @@ const heroVideo = "/videos/productvdo-background.mp4";
     />
   </div>
 
-  <div class="footermemberproduct1">
+  <div id="member" class="footermemberproduct1">
     <product2_footerlogomember
       :subtitle="` ການຖອນເງິນສົດຜ່ານຕູ້ເອທີເອັມ ແມ່ນນຳໃຊ້ລະບົບແລັບໃນການ
             ເຊື່ອມໂຍງຕູ້ເອທີເອັມຂອງແຕ່ລະທະນາຄານທີ່ເປັນສະມາຊິກຂອງ

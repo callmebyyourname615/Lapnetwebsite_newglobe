@@ -11,6 +11,16 @@ import stepwork from "./stepwork/stepwork.vue";
 import hero_sectionproduct3 from "../../Views/products/product_herosection/hero_sectionproduct3.vue";
 import secondfooter from "../../components/footer/mainfooter/secondfooter.vue";
 import product3tech from "../techbenetfit/product3tech.vue";
+import ScrollspySidebar from "../../components/scrollspy/ScrollspySidebar.vue";
+
+const sections = [
+  { id: "intro", label: "ບົດແນະນຳ", icon: "overview" },
+  { id: "benefit", label: "ຜົນປະໂຫຍດ", icon: "spark" },
+  { id: "condition", label: "ເງື່ອນໄຂ", icon: "tag" },
+  { id: "fee", label: "ຄ່າທຳນຽມ", icon: "layers" },
+  { id: "steps", label: "ຂັ້ນຕອນ", icon: "box" },
+  { id: "member", label: "ສະມາຊິກ", icon: "box" },
+];
 
 // -------------------- Env-only API base (Vite) --------------------
 // Required in .env:
@@ -168,15 +178,17 @@ const heroVideo = "/videos/productvdo-background.mp4";
 
   <herosection />
 
-  <div class="productdiscription">
+  <ScrollspySidebar :items="sections" />
+
+  <div id="intro" class="productdiscription">
     <hero_sectionproduct3 />
   </div>
 
-  <div class="benetfix">
+  <div id="benefit" class="benetfix">
     <product3tech />
   </div>
 
-  <div class="cardscrolling">
+  <div id="condition" class="cardscrolling">
     <cardscrolling
       title="ເງື່ອນໄຂການບໍລິການ"
       :subtitle="`  ລູກຄ້າທີ່ມີບັດ ATM ຂອງທະນາຄານທີ່ເປັນສະມາຊິກຂອງ LAPNet
@@ -190,15 +202,15 @@ const heroVideo = "/videos/productvdo-background.mp4";
     />
   </div>
 
-  <div class="tablefee">
+  <div id="fee" class="tablefee">
     <tablefee />
   </div>
 
-  <div class="stepwork" style="margin-top: 0">
+  <div id="steps" class="stepwork" style="margin-top: 0">
     <stepwork />
   </div>
 
-  <div class="footermemberproduct1">
+  <div id="member" class="footermemberproduct1">
     <product3_footerlogomember
       :subtitle="`   ການໂອນເງິນຂ້າມທະນາຄານຜ່ານຕູ້ ATM ແມ່ນນຳໃຊ້ລະບົບແລັບ
             ໃນການເຊື່ອມໂຍງຕູ້ເອທີເອັມຂອງແຕ່ລະທະນາຄານທີ່ເປັນສະມາຊິກຂອງ

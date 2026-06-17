@@ -14,6 +14,15 @@ import tablefee from "../../components/tablefee/tablefee.vue";
 import hero_sectionproduct4 from "../../Views/products/product_herosection/hero_sectionproduct4.vue";
 import secondfooter from "../../components/footer/mainfooter/secondfooter.vue";
 import product4_tab2 from "./product4_tab2.vue";
+import ScrollspySidebar from "../../components/scrollspy/ScrollspySidebar.vue";
+
+const sectionsTab1 = [
+  { id: "intro", label: "ບົດແນະນຳ", icon: "overview" },
+  { id: "benefit", label: "ຜົນປະໂຫຍດ", icon: "spark" },
+  { id: "condition", label: "ເງື່ອນໄຂ", icon: "tag" },
+  { id: "fee", label: "ຄ່າທຳນຽມ", icon: "layers" },
+  { id: "member", label: "ສະມາຊິກ", icon: "box" },
+];
 
 const heroVideo = "/videos/productvdo-background.mp4";
 
@@ -249,22 +258,24 @@ const setTab = (n) => {
     </nav>
 
     <template v-if="activeTab === 1">
-      <div class="productdiscription">
+      <div id="intro" class="productdiscription">
         <hero_sectionproduct4 />
       </div>
     </template>
   </div>
+
+  <ScrollspySidebar v-if="activeTab === 1" :items="sectionsTab1" />
 
   <!-- ============================================================
        TAB 1: ໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື
        ============================================================ -->
        
   <template v-if="activeTab === 1">
-    <div class="benetfix">
+    <div id="benefit" class="benetfix">
       <product4tech />
     </div>
 
-    <div class="condition_for_use">
+    <div id="condition" class="condition_for_use">
       <section class="intg-section">
         <div class="intg-grid" aria-hidden="true"></div>
 
@@ -318,13 +329,13 @@ const setTab = (n) => {
 
     <div class="boxmargin" style="width: 100%; height: 5vh"></div>
 
-    <div class="tablefee">
+    <div id="fee" class="tablefee">
       <tablefee />
     </div>
 
     <div class="boxmargin" style="width: 100%; height: 5vh"></div>
 
-    <div class="footermemberproduct1">
+    <div id="member" class="footermemberproduct1">
       <product4_footerlogomember
         :subtitle="`  ການໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື (Fund Transfer via Mobile
             Application) ໂດຍນຳໃຊ້ລະບົບ LMPS ໃນການເຊື່ອມໂຍງຜ່ານ

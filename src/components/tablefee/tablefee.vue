@@ -57,7 +57,7 @@
       </div>
 
       <div class="footer">
-        <small>Showing {{ rows.length }} rows</small>
+       
       </div>
     </div>
   </div>

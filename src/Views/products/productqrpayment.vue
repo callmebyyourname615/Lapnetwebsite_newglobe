@@ -8,6 +8,13 @@ import product5_footerlogomember from "../../components/footer/logomemberfooter/
 import product5tech from "../techbenetfit/product5tech.vue";
 import hero_sectionproduct5 from "../../Views/products/product_herosection/hero_sectionproduct5.vue";
 import secondfooter from "../../components/footer/mainfooter/secondfooter.vue";
+import ScrollspySidebar from "../../components/scrollspy/ScrollspySidebar.vue";
+
+const sections = [
+  { id: "intro", label: "ບົດແນະນຳ", icon: "overview" },
+  { id: "benefit", label: "ຜົນປະໂຫຍດ", icon: "spark" },
+  { id: "member", label: "ສະມາຊິກ", icon: "box" },
+];
 
 const heroVideo = "/videos/productvdo-background.mp4";
 
@@ -155,15 +162,17 @@ onMounted(() => {
     background-image="/overlaynav/product/navigatorcontent-bg.png"
   />
 
-  <div class="productdiscription">
+  <ScrollspySidebar :items="sections" />
+
+  <div id="intro" class="productdiscription">
     <hero_sectionproduct5 />
   </div>
 
-  <div class="benetfix">
+  <div id="benefit" class="benetfix">
     <product5tech />
   </div>
 
-  <div class="footermemberproduct1">
+  <div id="member" class="footermemberproduct1">
     <product5_footerlogomember
       :subtitle="`   ການຊໍາລະຂ້າມທະນາຄານຜ່ານ LAPNet LAOQR ໂດຍນຳໃຊ້ລະບົບ LMPS ໃນການເຊື່ອມໂຍງຜ່ານ Applications ຂອງແຕ່ລະທະນາຄານທີ່ເປັນສະມາຊິກຂອງບໍລິສັດ LAPNet ໃຫ້ສາມາດນຳໃຊ້ຟັງຊັ່ນການດຳເນີນທຸລະກຳຊໍາລະຜ່ານ QR ຂອງທະນາຄານອື່ນໄດ້.`"
       :features="[
