@@ -218,7 +218,7 @@ onBeforeUnmount(() => {
 }
 
 .hero-title {
-
+    margin-top: 1.4rem;
     font-size: clamp(2rem, 3vw, 4.2rem);
     line-height: 1.1;
     font-weight: 700;
