@@ -39,7 +39,7 @@
         <div class="plp-grid">
           <!-- Left: text -->
           <div class="plp-text">
-            <span :ref="registerText" class="plp-eyebrow">{{ eyebrow }}</span>
+            <span v-if="eyebrow" :ref="registerText" class="plp-eyebrow">{{ eyebrow }}</span>
             <h2 id="plp-title" :ref="registerText" class="plp-title">{{ title }}</h2>
             <p id="plp-subtitle" :ref="registerText" class="plp-subtitle">{{ subtitle }}</p>
 
@@ -75,12 +75,12 @@ import { gsap } from "gsap";
 const router = useRouter();
 
 const props = defineProps({
-  eyebrow: { type: String, default: "NEW PRODUCT LAUNCH" },
-  title: { type: String, default: "ບໍລິການໂອນເງິນຂ້າມທະນາຄານ ສະກຸນເງິນຕາຕ່າງປະເທດ" },
+  eyebrow: { type: String, default: "" },
+  title: { type: String, default: "ໂອນເງິນ ສະກຸນ ເງິນຕາຕ່າງປະເທດ ຂ້າມທະນາຄານ ຜ່ານ LAPNet" },
   subtitle: {
     type: String,
     default:
-      "ບໍລິການໃໝ່ຈາກ LAPNet — ໂອນເງິນ USD ↔ USD ແລະ THB ↔ THB ຂ້າມທະນາຄານ ສະດວກ ວ່ອງໄວ ປອດໄພ 24/7.",
+      "ສາມາດເຮັດທຸລະກຳໂອນເງິນໄດ້ຢ່າງສະດວກ, ວ່ອງໄວ, ມີຄວາມປອດໄພສູງ ແລະ ບໍລິການຕະຫຼອດ 24 ຊົ່ວໂມງ (24/7 Service).",
   },
   imageUrl: { type: String, default: "/product/product4/Transfer_Currentcy.png" },
   primaryCtaLabel: { type: String, default: "ອ່ານເພີ່ມເຕີມ" },

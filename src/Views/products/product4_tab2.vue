@@ -284,8 +284,8 @@ function bubbleStyle(logo) {
             <div class="lf-table" role="table">
               <div class="lf-row lf-row-head" role="row">
                 <div role="columnheader">ສະກຸນເງິນ</div>
-                <div role="columnheader">/ ຄັ້ງ</div>
-                <div role="columnheader">/ ວັນ</div>
+                <div role="columnheader">ວົງເງິນສູງສຸດ / ຄັ້ງ</div>
+                <div role="columnheader">ວົງເງິນສູງສຸດ / ວັນ</div>
               </div>
               <div class="lf-row" role="row">
                 <div role="cell"><span class="lf-code">USD</span></div>
@@ -353,7 +353,7 @@ function bubbleStyle(logo) {
     </section>
 
     <!-- ===== Member Banks Section ===== -->
-    <section class="mb-section">
+    <!-- <section class="mb-section">
       <div class="mb-decoration" aria-hidden="true"></div>
 
       <div class="mb-inner">
@@ -388,7 +388,7 @@ function bubbleStyle(logo) {
           </li>
         </ul>
       </div>
-    </section>
+    </section> -->
 
 
    
