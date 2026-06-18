@@ -17,15 +17,39 @@
         </div>
 
         <!-- Desktop links -->
-        <nav class="navLinks">
-         
-          <a href="/" class="navLink">Product</a>
-        
-          <a href="/" class="navLink">Member</a>
-          <a href="/" class="navLink">BLog</a>
-          <a href="/" class="navLink">Join us </a>
-          <a href="/" class="navLink">About </a>
-          <a href="/" class="navLink">Contact </a>
+        <nav
+          class="navLinks"
+          :class="{ 'mega-open': isMegaOpen }"
+          @mouseenter="openMegaMenu"
+          @mouseleave="closeMegaMenu"
+        >
+          <router-link
+            v-for="item in menuItems"
+            :key="item.label"
+            class="navLink"
+            :class="{ hasDropdown: item.children }"
+            :to="item.to"
+          >
+            {{ item.label }}
+            <span v-if="item.children" class="navArrow">▼</span>
+          </router-link>
+
+          <div class="megaMenu" @mouseenter="openMegaMenu" @mouseleave="closeMegaMenu">
+            <div class="megaShell">
+              <section v-for="column in menuColumns" :key="column.label" class="megaColumn">
+                <router-link class="megaHeading" :to="column.to">{{ column.label }}</router-link>
+                <router-link
+                  v-for="child in column.children"
+                  :key="child.to"
+                  class="megaLink"
+                  :to="child.to"
+                >
+                  <i :class="['megaIcon', child.icon]" aria-hidden="true"></i>
+                  <span>{{ child.label }}</span>
+                </router-link>
+              </section>
+            </div>
+          </div>
         </nav>
 
         <!-- Right actions -->
@@ -109,6 +133,7 @@
       </div>
     </div>
 
+    <div class="navBackdrop" :class="{ active: isMegaOpen }"></div>
     <div class="bottomFade" aria-hidden="true"></div>
   </section>
 
@@ -201,6 +226,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch, defineAsyncComponent, nextTick } from "vue";
 import gsap from "gsap";
+import { menuItems, menuColumns } from "../../components/miannavbar/menuItems";
 
 // ✅ above-the-fold (keep normal so nav shows instantly)
 
@@ -231,6 +257,7 @@ const LapnetGlobe = defineAsyncComponent(atmmockup);
 const sidebarOpen = ref(false);
 const sidebarShouldMount = ref(false);
 const belowFold = ref(false);
+const isMegaOpen = ref(false);
 
 const root = ref<HTMLElement | null>(null);
 const nav = ref<HTMLElement | null>(null);
@@ -257,6 +284,26 @@ let removeKeyListener: (() => void) | null = null;
 // ✅ store any GSAP animations (Tween/Timeline/DelayedCall etc.)
 let loaderAnims: gsap.core.Animation[] = [];
 let loaderDone: gsap.core.Tween | null = null;
+let megaCloseTimer: ReturnType<typeof setTimeout> | null = null;
+
+const isDesktop = () => {
+  if (typeof window === "undefined") return true;
+  return window.innerWidth > 980;
+};
+
+const openMegaMenu = () => {
+  if (!isDesktop()) return;
+  if (megaCloseTimer) clearTimeout(megaCloseTimer);
+  isMegaOpen.value = true;
+};
+
+const closeMegaMenu = () => {
+  if (!isDesktop()) return;
+  if (megaCloseTimer) clearTimeout(megaCloseTimer);
+  megaCloseTimer = setTimeout(() => {
+    isMegaOpen.value = false;
+  }, 100);
+};
 
 const lockScroll = (on: boolean) => {
   if (typeof document === "undefined") return;
@@ -578,12 +625,18 @@ onBeforeUnmount(() => {
 }
 
 .navLinks {
+  position: relative;
   display: flex;
-  gap: 32px;
+  gap: 18px;
   align-items: center;
 }
 
 .navLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 0 6px;
   color: rgb(255, 255, 255);
   font-size: var(--fs-xs);
   text-decoration: none;
@@ -594,6 +647,132 @@ onBeforeUnmount(() => {
 .navLink:hover {
   opacity: 1;
   transform: translateY(-1px);
+}
+
+.navArrow {
+  font-size: 0.48rem;
+  opacity: 0.7;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.mega-open .navArrow {
+  opacity: 1;
+  transform: rotate(180deg);
+}
+
+.megaMenu {
+  position: fixed;
+  top: 78px;
+  left: 50%;
+  right: auto;
+  width: 100vw;
+  z-index: 4;
+  padding: 0 0 22px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -16px);
+  transition: opacity 0.26s ease, transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.mega-open .megaMenu {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.megaShell {
+  width: 100%;
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(380px, 500px) minmax(260px, 320px) minmax(280px, 340px);
+  justify-content: center;
+  align-items: start;
+  gap: clamp(34px, 5vw, 76px);
+  padding: 36px clamp(52px, 8vw, 132px) 42px;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 0;
+  background: rgba(10, 8, 18, 0.9);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(24px) saturate(1.15);
+  -webkit-backdrop-filter: blur(24px) saturate(1.15);
+}
+
+.megaColumn {
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 10px;
+}
+
+.megaHeading,
+.megaLink {
+  text-decoration: none;
+}
+
+.megaHeading {
+  display: inline-flex;
+  margin: 0 0 16px;
+  padding-left: 10px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.megaLink {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px 8px 10px;
+  border-radius: 8px;
+  color: rgba(226, 238, 255, 0.82);
+  font-size: 0.9rem;
+  line-height: 1.42;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.megaLink:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.055);
+  transform: translateX(2px);
+}
+
+.megaIcon {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  text-align: center;
+  color: rgba(0, 200, 255, 0.72);
+  font-size: 0.82rem;
+  border: 1px solid rgba(0, 200, 255, 0.12);
+  background: rgba(0, 200, 255, 0.055);
+  border-radius: 8px;
+}
+
+.navBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  background: rgba(7, 5, 15, 0.2);
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
+  transition: opacity 0.24s ease, backdrop-filter 0.24s ease;
+}
+
+.navBackdrop.active {
+  opacity: 1;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .navRight {
@@ -864,6 +1043,11 @@ onBeforeUnmount(() => {
     display: none;
   }
 
+  .megaMenu,
+  .navBackdrop {
+    display: none;
+  }
+
   .menuBtn {
     display: flex;
   }
@@ -871,6 +1055,15 @@ onBeforeUnmount(() => {
   .globeStage {
     width: min(760px, 96vw);
     height: 420px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .megaShell {
+    grid-template-columns: minmax(320px, 430px) minmax(220px, 280px) minmax(240px, 300px);
+    gap: 28px;
+    padding-left: 34px;
+    padding-right: 34px;
   }
 }
 

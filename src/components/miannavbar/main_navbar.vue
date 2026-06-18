@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { gsap } from 'gsap'
 import sidebar from '../sidebar/sidebar.vue'
 import overlaynavbar from './overlaynavbar.vue'
+import { menuItems, menuColumns } from './menuItems'
 
 const props = defineProps({
   title: {
@@ -27,93 +28,7 @@ const sidebarRef = ref(null)
 
 const route = useRoute()
 
-// ✅ เมนู + route แยกแต่ละอันชัดเจน
-const menuItems = [
-  {
-    label: 'ຜະລິດຕະພັນ ແລະ ການບໍລິການ',
-    to: '/products',
-    children: [
-      {
-        label: 'ຜະລິດຕະພັນ ແລະ ການບໍລິການ ທັງໝົດ',
-        to: '/products_service/allproduct',
-        icon: 'ri-layout-grid-fill'
-      },
-      {
-        label: 'ກວດຍອດເງິນຂ້າມທະນາຄານຜ່ານຕູ້ ATM',
-        to: '/products_service/atm-inquiry',
-        icon: 'ri-qr-scan-2-line'
-      },
-      {
-        label: 'ຖອນເງິນສົດຂ້າມທະນາຄານຜ່ານຕູ້ ATM',
-        to: '/products_service/atm-cash-withdraw',
-        icon: 'fa-solid fa-money-bill-transfer'
-      },
-      {
-        label: 'ໂອນເງິນຂ້າມທະນາຄານຜ່ານຕູ້ ATM',
-        to: '/products_service/atm-transfer',
-        icon: 'fa-solid fa-right-left'
-      },
-      {
-        label: 'ໂອນເງິນຂ້າມທະນາຄານເທິງມືຖື',
-        to: '/products_service/mobile-transfer',
-        icon: 'fa-solid fa-mobile-screen'
-      },
-      {
-        label: 'ຊຳລະຂ້າມທະນາຄານຜ່ານ LAPNet',
-        to: '/products_service/qr-payment',
-        icon: 'fa-solid fa-money-bill-wave'
-      },
-      {
-        label: 'ຊຳລະຂ້າມແດນຜ່ານ QR CODE  ',
-        to: '/products_service/crossborder',
-        icon: 'fa-solid fa-qrcode'
-      }
-    ]
-  },
-  {
-    label: 'ສະມາຊິກ',
-    to: '/members',
-    children: [
-      {
-        label: 'ສະມາຊິກລະບົບບັດທະນາຄານຮ່ວມກັນ',
-        to: '/member/membercardATM',
-        icon: 'fa-solid fa-credit-card'
-      },
-      {
-        label: 'ສະມາຊິກລະບົບຊຳລະຂ້າມທະນາຄານເທິງມືຖື',
-        to: '/member/mobile_banking',
-        icon: 'fa-solid fa-mobile-screen-button'
-      },
-      {
-        label: 'ສະມາຊິກລະບົບຊຳລະຂ້າມແດນຜ່ານ QR Code',
-        to: '/member/crossborder',
-        icon: 'fa-solid fa-earth-asia'
-      }
-    ]
-  },
-  { label: 'ຂ່າວ ແລະ ກິດຈະກຳ', to: '/bloggrid' },
-  { label: 'ຮ່ວມງານກັບເຮົາ', to: '/joinus' },
-  {
-    label: 'ກ່ຽວກັບພວກເຮົາ',
-    to: '/about',
-    children: [
-      { label: 'ວິໄສທັດ ແລະ ພາລະກິດ', to: '/aboutus/vision', icon: 'fa-solid fa-lightbulb' },
-      { label: 'ພາລະບົດບາດ', to: '/aboutus/role', icon: 'fa-solid fa-list-check' },
-      { label: 'ຄວາມເປັນມາ', to: '/aboutus/history', icon: 'fa-solid fa-timeline' },
-      {
-        label: 'ສະພາບໍລິຫານ',
-        to: '/aboutus/board_director',
-        icon: 'fa-solid fa-users-between-lines'
-      },
-      {
-        label: 'ໂຄງຮ່າງການຈັດຕັ້ງ',
-        to: '/aboutus/companystructureimage',
-        icon: 'fa-solid fa-sitemap'
-      }
-    ]
-  },
-  { label: 'ຕິດຕໍ່ພວກເຮົາ', to: '/contactus', isCta: true }
-]
+const isMegaOpen = ref(false)
 
 const isDesktop = () => {
   if (typeof window === 'undefined') return true
@@ -124,132 +39,31 @@ const openSidebarFromNav = () => {
   sidebarRef.value?.toggleSidebar()
 }
 
-/** =========================
- * ✅ FIX HOVER BUG (stuck)
- * - ป้องกัน dropdown ค้าง / invisible overlay block
- * - ปิด dropdown เก่าทันทีเมื่อไป hover อันใหม่
- * - ใช้ pointer-events none ตอนปิด, auto ตอนเปิด
- * - overwrite auto + killTweens กัน tween ซ้อน
- * - ใส่ delay เล็กน้อยกันหลุด gap
- * ========================= */
-const openDropdownEl = ref(null)
-const closeTimers = new WeakMap()
+let closeTimer = null
 
-const clearCloseTimer = (dropdown) => {
-  const t = closeTimers.get(dropdown)
-  if (t) {
-    clearTimeout(t)
-    closeTimers.delete(dropdown)
-  }
-}
-
-const openDropdown = (dropdown, items) => {
-  if (!dropdown) return
-
-  clearCloseTimer(dropdown)
-
-  gsap.killTweensOf(dropdown)
-  gsap.killTweensOf(items)
-
-  // เปิดแล้วค่อยให้รับเมาส์
-  gsap.set(dropdown, { pointerEvents: 'auto' })
-
-  gsap.to(dropdown, {
-    autoAlpha: 1,
-    y: 0,
-    scale: 1,
-    duration: 0.25,
-    ease: 'power3.out',
-    overwrite: 'auto'
-  })
-
-  if (items?.length) {
-    gsap.fromTo(
-      items,
-      { x: -10, opacity: 0 },
-      {
-        x: 0,
-        opacity: 1,
-        duration: 0.22,
-        stagger: 0.04,
-        ease: 'back.out(1.7)',
-        overwrite: 'auto'
-      }
-    )
-  }
-}
-
-const closeDropdown = (dropdown) => {
-  if (!dropdown) return
-
-  clearCloseTimer(dropdown)
-
-  gsap.killTweensOf(dropdown)
-
-  gsap.to(dropdown, {
-    autoAlpha: 0,
-    y: -8,
-    scale: 0.98,
-    duration: 0.18,
-    ease: 'power2.in',
-    overwrite: 'auto',
-    onComplete: () => {
-      // ปิดแล้ว “ห้ามทับ” เมนูอื่น
-      gsap.set(dropdown, { pointerEvents: 'none' })
-    }
-  })
-}
-
-const handleMouseEnter = (event) => {
+const openMegaMenu = () => {
   if (!isDesktop()) return
-
-  const el = event.currentTarget
-  const dropdown = el.querySelector('.dropdown-menu')
-  const items = el.querySelectorAll('.dropdown-item')
-
-  if (!dropdown) return
-
-  // ✅ ปิดอันที่เคยเปิดอยู่ ถ้าไม่ใช่อันเดียวกัน
-  if (openDropdownEl.value && openDropdownEl.value !== dropdown) {
-    closeDropdown(openDropdownEl.value)
-  }
-
-  openDropdownEl.value = dropdown
-  openDropdown(dropdown, items)
+  if (closeTimer) clearTimeout(closeTimer)
+  isMegaOpen.value = true
 }
 
-const handleMouseLeave = (event) => {
+const closeMegaMenu = () => {
   if (!isDesktop()) return
-
-  const el = event.currentTarget
-  const dropdown = el.querySelector('.dropdown-menu')
-  if (!dropdown) return
-
-  // ✅ delay นิดนึง กันหลุดช่องว่างระหว่างปุ่มกับ dropdown
-  clearCloseTimer(dropdown)
-  const t = setTimeout(() => {
-    closeDropdown(dropdown)
-    if (openDropdownEl.value === dropdown) openDropdownEl.value = null
-  }, 120)
-
-  closeTimers.set(dropdown, t)
+  if (closeTimer) clearTimeout(closeTimer)
+  closeTimer = setTimeout(() => {
+    isMegaOpen.value = false
+  }, 100)
 }
 
 // ✅ เปลี่ยนหน้าแล้วปิด dropdown เสมอ กันค้าง
 watch(
   () => route.fullPath,
   () => {
-    if (openDropdownEl.value) {
-      closeDropdown(openDropdownEl.value)
-      openDropdownEl.value = null
-    }
+    isMegaOpen.value = false
   }
 )
 
 onMounted(() => {
-  // ✅ กัน state ค้างตั้งแต่เริ่ม: ซ่อน + ห้ามรับเมาส์
-  gsap.set('.dropdown-menu', { autoAlpha: 0, y: -8, scale: 0.98, pointerEvents: 'none' })
-
   const tl = gsap.timeline({
     defaults: { duration: 0.8, ease: 'power3.out' }
   })
@@ -292,23 +106,26 @@ onMounted(() => {
     </button>
 
     <!-- RIGHT: DESKTOP NAV -->
-    <nav class="nav-right">
+    <nav
+      class="nav-right"
+      :class="{ 'mega-open': isMegaOpen }"
+      @mouseenter="openMegaMenu"
+      @mouseleave="closeMegaMenu"
+    >
       <div
         v-for="(item, index) in menuItems"
         :key="index"
         class="nav-group"
-        @mouseenter="handleMouseEnter"
-        @mouseleave="handleMouseLeave"
       >
-        <button
+        <RouterLink
           v-if="item.children"
           class="nav-item"
-          type="button"
           :class="{ 'nav-cta': item.isCta, 'has-dropdown': item.children }"
+          :to="item.to"
         >
           {{ item.label }}
           <span class="dropdown-arrow">▼</span>
-        </button>
+        </RouterLink>
 
         <RouterLink
           v-else
@@ -318,22 +135,31 @@ onMounted(() => {
         >
           {{ item.label }}
         </RouterLink>
+      </div>
 
-        <!-- DROPDOWN MENU -->
-        <div v-if="item.children" class="dropdown-menu">
-          <div class="dropdown-blur-bg"></div>
-          <ul class="dropdown-list">
-            <li v-for="(child, cIndex) in item.children" :key="cIndex" class="dropdown-item">
-              <RouterLink class="dropdown-link" :to="child.to">
-                <i :class="['dropdown-icon', child.icon]" aria-hidden="true"></i>
-                {{ child.label }}
-              </RouterLink>
-            </li>
-          </ul>
+      <div class="mega-menu" @mouseenter="openMegaMenu" @mouseleave="closeMegaMenu">
+        <div class="mega-shell">
+          <section
+            v-for="column in menuColumns"
+            :key="column.label"
+            class="mega-column"
+          >
+            <RouterLink class="mega-heading" :to="column.to">{{ column.label }}</RouterLink>
+            <RouterLink
+              v-for="child in column.children"
+              :key="child.to"
+              class="mega-link"
+              :to="child.to"
+            >
+              <i :class="['mega-icon', child.icon]" aria-hidden="true"></i>
+              <span>{{ child.label }}</span>
+            </RouterLink>
+          </section>
         </div>
       </div>
     </nav>
   </header>
+  <div class="nav-backdrop" :class="{ active: isMegaOpen }"></div>
 
   <!-- MOBILE SIDEBAR -->
   <sidebar ref="sidebarRef" />
@@ -441,6 +267,7 @@ onMounted(() => {
 
 /* RIGHT: NAV ITEMS (desktop only) */
 .nav-right {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -477,7 +304,8 @@ onMounted(() => {
   opacity: 0.7;
 }
 
-.nav-group:hover .dropdown-arrow {
+.mega-open .dropdown-arrow,
+.nav-right:hover .dropdown-arrow {
   transform: rotate(180deg);
   opacity: 1;
 }
@@ -489,95 +317,121 @@ onMounted(() => {
   text-shadow: 0 0 8px rgba(120, 200, 255, 0.6);
 }
 
-/* DROPDOWN MENU */
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
+.mega-menu {
+  position: fixed;
+  top: 11vh;
   left: 50%;
-  transform: translateX(-50%);
-  min-width: 240px;
-  padding-top: 15px;
-
-  /* ✅ สำคัญมาก กัน invisible overlay block */
+  right: auto;
+  width: 100vw;
+  z-index: 49;
+  padding: 0 0 22px;
   pointer-events: none;
-
-  /* (ปล่อยให้ GSAP คุม autoAlpha) */
-  visibility: hidden;
   opacity: 0;
-
-  z-index: 60;
+  transform: translate(-50%, -18px);
+  transition: opacity 0.26s ease, transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.dropdown-list {
-  list-style: none;
-  padding: 0;
+.mega-open .mega-menu,
+.nav-right:hover .mega-menu {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.mega-shell {
+  width: 100%;
   margin: 0;
-  width: 400px;
-  background: rgba(5, 11, 27, 0.95);
-  border: 1px solid rgba(80, 170, 255, 0.5);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 80, 200, 0.3);
-  backdrop-filter: blur(20px);
-  overflow: hidden;
-}
-
-.dropdown-item {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-.dropdown-item:last-child {
-  border-bottom: none;
-}
-
-/* ✅ Font Awesome icon in dropdown */
-.dropdown-icon {
-  display: inline-flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(380px, 500px) minmax(260px, 320px) minmax(280px, 340px);
   justify-content: center;
-  width: 18px;
-  margin-right: 10px;
-  font-size: 0.85rem;
-  opacity: 0.9;
+  align-items: start;
+  gap: clamp(34px, 5vw, 76px);
+  padding: 36px clamp(52px, 8vw, 132px) 42px;
+  border: 0;
+  border-top: 1px solid rgba(138, 194, 255, 0.24);
+  border-bottom: 1px solid rgba(138, 194, 255, 0.14);
+  border-radius: 0;
+  background: rgba(8, 14, 34, 0.9);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
 }
 
-/* ใช้กับ RouterLink */
-.dropdown-link {
-  display: block;
-  padding: 12px 20px;
-  color: #b0d0ff;
+.mega-column {
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 10px;
+}
+
+.mega-heading,
+.mega-link {
   text-decoration: none;
-  font-size: 1rem;
+}
+
+.mega-heading {
+  display: inline-flex;
+  margin: 0 0 16px;
+  padding-left: 10px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
 }
 
-.dropdown-link:hover {
-  background: linear-gradient(90deg, rgba(0, 60, 150, 0.4), transparent);
-  color: #fff;
-  padding-left: 28px;
-  text-shadow: 0 0 5px rgba(0, 200, 255, 0.8);
+.mega-link {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px 8px 10px;
+  border-radius: 8px;
+  color: rgba(213, 232, 255, 0.82);
+  font-size: 0.9rem;
+  line-height: 1.42;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 
-.dropdown-link:hover .dropdown-icon {
+.mega-link:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.055);
   transform: translateX(2px);
 }
 
-.dropdown-link::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: #00d4ff;
-  opacity: 0;
-  transition: opacity 0.2s;
+.mega-icon {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  text-align: center;
+  color: rgba(142, 215, 255, 0.72);
+  font-size: 0.82rem;
+  border: 1px solid rgba(142, 215, 255, 0.12);
+  background: rgba(142, 215, 255, 0.055);
+  border-radius: 8px;
 }
 
-.dropdown-link:hover::before {
+.nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0;
+  background: rgba(2, 7, 18, 0.2);
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
+  transition: opacity 0.24s ease, backdrop-filter 0.24s ease;
+}
+
+.nav-backdrop.active,
+.nav-root:has(.nav-right:hover) + .nav-backdrop {
   opacity: 1;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 /* CTA BUTTON */
@@ -638,6 +492,13 @@ onMounted(() => {
   .nav-item {
     font-size: 0.8rem;
   }
+
+  .mega-shell {
+    grid-template-columns: minmax(320px, 430px) minmax(220px, 280px) minmax(240px, 300px);
+    gap: 28px;
+    padding-left: 34px;
+    padding-right: 34px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -649,6 +510,11 @@ onMounted(() => {
   }
 
   .nav-right {
+    display: none;
+  }
+
+  .mega-menu,
+  .nav-backdrop {
     display: none;
   }
 

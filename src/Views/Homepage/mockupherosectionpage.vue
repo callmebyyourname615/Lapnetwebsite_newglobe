@@ -38,15 +38,40 @@
           <span style="font-size: var(--fs-lapnet)">LAPNet</span>
         </div>
 
-        <nav class="nav" @keydown.esc="closeMenu">
-          <productDropdown />
-          <memberdropdown />
+        <nav
+          class="nav"
+          :class="{ 'megaOpen': isMegaOpen }"
+          @mouseenter="openMegaMenu"
+          @mouseleave="closeMegaMenu"
+          @keydown.esc="closeMenu"
+        >
+          <router-link
+            v-for="item in menuItems"
+            :key="item.label"
+            :to="item.to"
+            class="navLink"
+            :class="{ hasDropdown: item.children }"
+          >
+            {{ item.label }}
+            <span v-if="item.children" class="navArrow">▼</span>
+          </router-link>
 
-          <router-link to="/bloggrid" class="navLink">ຂ່າວສານ ແລະ ກິດຈະກຳ</router-link>
-          <router-link to="/joinus" class="navLink">ຮ່ວມງານກັບເຮົາ</router-link>
-          <aboutusdropdown />
-
-          <router-link to="/contactus" class="navLink">ຕິດຕໍ່ພວກເຮົາ</router-link>
+          <div class="megaMenu" @mouseenter="openMegaMenu" @mouseleave="closeMegaMenu">
+            <div class="megaShell">
+              <section v-for="column in menuColumns" :key="column.label" class="megaColumn">
+                <router-link class="megaHeading" :to="column.to">{{ column.label }}</router-link>
+                <router-link
+                  v-for="child in column.children"
+                  :key="child.to"
+                  class="megaLink"
+                  :to="child.to"
+                >
+                  <i :class="['megaIcon', child.icon]" aria-hidden="true"></i>
+                  <span>{{ child.label }}</span>
+                </router-link>
+              </section>
+            </div>
+          </div>
         </nav>
 
         <div class="actions">
@@ -77,6 +102,7 @@
       
         </div>
       </header>
+      <div class="navBackdrop" :class="{ active: isMegaOpen }"></div>
 
       <!-- Hero -->
       <main class="hero">
@@ -130,9 +156,7 @@ import gsap from "gsap"
 
 import homepage_sidebar from "../../components/sidebar/homepage_sidebar.vue"
 import atmmockup from "../../components/mockup/atmmockup.vue"
-import productDropdown from "../../components/dropdown-homepage/product-dropdown.vue"
-import memberdropdown from "../../components/dropdown-homepage/memberdropdown.vue"
-import aboutusdropdown from "../../components/dropdown-homepage/aboutusdropdown.vue"
+import { menuItems, menuColumns } from "../../components/miannavbar/menuItems"
 onMounted(() => {
   window.scrollTo({
     top: 0,
@@ -293,6 +317,8 @@ const sparklesRef = ref(null)
 
 /** dropdown state */
 const openMenu = ref(null)
+const isMegaOpen = ref(false)
+let megaCloseTimer = null
 const visible = reactive({ products: false, about: false, member: false })
 
 const productsPanelRef = ref(null)
@@ -309,6 +335,21 @@ const canHover = isClient && window.matchMedia?.("(hover: hover)").matches
 
 function closeMenu() {
   openMenu.value = null
+  isMegaOpen.value = false
+}
+
+function openMegaMenu() {
+  if (isMobile.value) return
+  if (megaCloseTimer) clearTimeout(megaCloseTimer)
+  isMegaOpen.value = true
+}
+
+function closeMegaMenu() {
+  if (isMobile.value) return
+  if (megaCloseTimer) clearTimeout(megaCloseTimer)
+  megaCloseTimer = setTimeout(() => {
+    isMegaOpen.value = false
+  }, 100)
 }
 
 function smartPosition(name) {
@@ -712,10 +753,11 @@ onBeforeUnmount(() => {
 .nav {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 32px;
-  width: 65%;
-  padding: 10px 16px;
+  justify-content: space-evenly;
+  gap: clamp(18px, 2vw, 34px);
+  width: min(980px, 68vw);
+  min-height: 58px;
+  padding: 10px clamp(22px, 2.8vw, 42px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 999px;
   background: rgba(5, 10, 30, 0.28);
@@ -726,10 +768,152 @@ onBeforeUnmount(() => {
 }
 
 .navLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 4px;
   color: #fff;
   text-decoration: none;
   font-size: var(--fs-xs);
   font-weight: 500;
+  white-space: nowrap;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.navLink:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.navArrow {
+  font-size: 0.48rem;
+  opacity: 0.72;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.megaOpen .navArrow,
+.nav:hover .navArrow {
+  opacity: 1;
+  transform: rotate(180deg);
+}
+
+.megaMenu {
+  position: fixed;
+  top: 82px;
+  left: 50%;
+  right: auto;
+  width: 100vw;
+  z-index: 998;
+  padding: 0 0 22px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -16px);
+  transition: opacity 0.26s ease, transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.megaOpen .megaMenu,
+.nav:hover .megaMenu {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.megaShell {
+  width: 100%;
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(380px, 500px) minmax(260px, 320px) minmax(280px, 340px);
+  justify-content: center;
+  align-items: start;
+  gap: clamp(34px, 5vw, 76px);
+  padding: 36px clamp(52px, 8vw, 132px) 42px;
+  border: 0;
+  border-top: 1px solid rgba(110, 165, 255, 0.22);
+  border-bottom: 1px solid rgba(110, 165, 255, 0.14);
+  border-radius: 0;
+  background: rgba(5, 10, 30, 0.9);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(24px) saturate(1.15);
+  -webkit-backdrop-filter: blur(24px) saturate(1.15);
+}
+
+.megaColumn {
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 10px;
+}
+
+.megaHeading,
+.megaLink {
+  text-decoration: none;
+}
+
+.megaHeading {
+  display: inline-flex;
+  margin: 0 0 16px;
+  padding-left: 10px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.megaLink {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px 8px 10px;
+  border-radius: 8px;
+  color: rgba(226, 238, 255, 0.82);
+  font-size: 0.9rem;
+  line-height: 1.42;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.megaLink:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.055);
+  transform: translateX(2px);
+}
+
+.megaIcon {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  text-align: center;
+  color: rgba(86, 204, 255, 0.72);
+  font-size: 0.82rem;
+  border: 1px solid rgba(86, 204, 255, 0.12);
+  background: rgba(86, 204, 255, 0.055);
+  border-radius: 8px;
+}
+
+.navBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  background: rgba(4, 8, 23, 0.2);
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
+  transition: opacity 0.24s ease, backdrop-filter 0.24s ease;
+}
+
+.navBackdrop.active,
+.topbar:has(.nav:hover) + .navBackdrop {
+  opacity: 1;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .btn {
@@ -750,6 +934,23 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
+}
+
+.actions a {
+  display: inline-flex;
+  text-decoration: none;
+}
+
+.actions .btnGhost {
+  min-width: 112px;
+  height: 42px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  line-height: 1;
 }
 
 .iconLink {
@@ -915,6 +1116,11 @@ onBeforeUnmount(() => {
     display: none;
   }
 
+  .megaMenu,
+  .navBackdrop {
+    display: none;
+  }
+
   .hamburger {
     display: inline-flex;
   }
@@ -930,6 +1136,15 @@ onBeforeUnmount(() => {
   .sparkles {
     display: none;
     /* ✅ ตัดของหนักบนมือถือ */
+  }
+}
+
+@media (max-width: 1180px) {
+  .megaShell {
+    grid-template-columns: minmax(320px, 430px) minmax(220px, 280px) minmax(240px, 300px);
+    gap: 28px;
+    padding-left: 34px;
+    padding-right: 34px;
   }
 }
 
