@@ -387,6 +387,10 @@ router.isReady().then(() => {
   if (hash.startsWith(`#${TOKEN_PREFIX}`)) {
     const token = hash.slice(`#${TOKEN_PREFIX}`.length);
     trackVisitor(window.location.href, token);
+    const decodedPath = decodePathToken(token);
+    if (decodedPath && decodedPath !== router.currentRoute.value.fullPath) {
+      router.replace(decodedPath);
+    }
   }
 });
 

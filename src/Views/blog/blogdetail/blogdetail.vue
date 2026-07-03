@@ -63,6 +63,7 @@
       <div v-else class="detail-layout">
         <!-- LEFT: Blog Detail -->
         <main class="detail-main" ref="detailMain">
+          <template v-if="!activePost.isDocument">
           <!-- Category + Meta -->
           <div class="post-meta">
             <span class="chip">
@@ -116,6 +117,28 @@
               {{ paragraph }}
             </p>
           </article>
+          </template>
+
+          <article v-else class="document-reader" aria-label="Document preview">
+            <a
+              v-if="activePost.pdfUrl"
+              class="soft-copy-btn"
+              :href="activePost.pdfUrl"
+              target="_blank"
+              rel="noopener"
+            >
+              <i class="fa-solid fa-file-pdf"></i>
+              Soft Copy
+            </a>
+
+            <section
+              v-for="(pageHtml, index) in activePost.documentPages"
+              :key="index"
+              class="document-paper"
+              v-html="pageHtml"
+            ></section>
+          </article>
+
         </main>
 
         <!-- RIGHT: Sidebar -->
@@ -231,9 +254,13 @@
 
 <script>
 import { gsap } from "gsap";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 
 import main_navbar from "../../../components/miannavbar/main_navbar.vue";
 import mainfooter from "../../../components/footer/mainfooter/secondfooter.vue";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 // -------------------- Env-only API base (Vite) --------------------
 // Required in .env:
@@ -326,6 +353,7 @@ export default {
       isLoading: false,
       error: null,
       posts: [],
+      singlePost: null,
 
       searchQuery: "",
       tagFilters: [
@@ -346,6 +374,10 @@ export default {
       swipeCooldown: false,
 
       aborter: null,
+      pdfTab: "original",
+      pdfRenderStatus: "idle",
+      pdfRenderError: "",
+      pdfRenderTaskId: 0,
 
       // Keep timeline to kill safely
       introTl: null
@@ -364,6 +396,7 @@ export default {
     },
 
     activePost() {
+      if (this.singlePost && String(this.singlePost.id).trim() === this.postId) return this.singlePost;
       if (!Array.isArray(this.posts) || !this.posts.length) return null;
       const pid = this.postId;
       if (!pid) return null;
@@ -442,6 +475,16 @@ export default {
           document.body.style.overflow = "";
         } catch {}
       }
+    },
+
+    "activePost.pdfEmbedUrl"() {
+      this.$nextTick(() => this.renderPdfCanvas());
+    },
+
+    pdfTab(val) {
+      if (val === "original") {
+        this.$nextTick(() => this.renderPdfCanvas());
+      }
     }
   },
 
@@ -484,6 +527,7 @@ export default {
     async fetchNews() {
       this.isLoading = true;
       this.error = null;
+      this.singlePost = null;
 
       try {
         if (!API_BASE) {
@@ -511,8 +555,25 @@ export default {
 
         this.posts = list.map((item) => this.normalizeNewsItem(item)).filter(Boolean);
 
+        if (!this.activePost && this.postId) {
+          const detailRes = await fetch(joinBaseAndPath(API_BASE, `/api/news/${encodeURIComponent(this.postId)}`), {
+            method: "GET",
+            signal: this.aborter.signal,
+            headers: { Accept: "application/json" }
+          });
+
+          if (detailRes.ok) {
+            const detailJson = await detailRes.json();
+            const rawDetail = detailJson?.data ?? detailJson?.news ?? detailJson?.result ?? detailJson;
+            this.singlePost = this.normalizeNewsItem(rawDetail);
+          }
+        }
+
         this.$nextTick(() => {
-          if (this.activePost) this.animateIntroSafe();
+          if (this.activePost) {
+            this.animateIntroSafe();
+            this.renderPdfCanvas();
+          }
         });
       } catch (e) {
         if (e?.name === "AbortError") return;
@@ -551,8 +612,28 @@ export default {
 
       const rawDesc = item?.description_news ?? item?.description ?? "";
       const content = this.toParagraphs(rawDesc);
+      const isDocument = this.isDocumentContent(category, rawDesc);
+      const documentPages = isDocument ? this.toDocumentPages(rawDesc) : [];
 
       const heroImage = this.resolveImage(item?.hero_img ?? item?.heroImage ?? "");
+      const pdfUrl = this.resolveImage(
+        item?.pdf_file_url ??
+          item?.pdf_url ??
+          item?.pdf_file ??
+          item?.pdfFile ??
+          ""
+      );
+      const pdfVersion =
+        item?.updated_at ??
+        item?.updatedAt ??
+        item?.created_at ??
+        item?.createdAt ??
+        item?.idnews ??
+        item?.id ??
+        Date.now();
+      const pdfText = String(item?.pdf_text ?? item?.pdfText ?? "").trim();
+      const pdfExtractStatus = String(item?.pdf_extract_status ?? item?.pdfExtractStatus ?? "").trim();
+      const pdfPageCount = Number(item?.pdf_page_count ?? item?.pdfPageCount ?? 0) || 0;
 
       const galleryRaw = this.parseMaybeJson(item?.gallery ?? item?.images ?? []);
       const gallery = Array.isArray(galleryRaw)
@@ -589,13 +670,104 @@ export default {
         title,
         tags,
         content,
+        isDocument,
+        documentPages,
         heroImage,
+        pdfUrl,
+        pdfEmbedUrl: this.buildPdfEmbedUrl(pdfUrl, pdfVersion),
+        pdfText,
+        pdfExtractStatus,
+        pdfExtractStatusLabel: this.formatPdfStatus(pdfExtractStatus),
+        pdfPageCount,
         gallery,
         image: heroImage,
         dateTime,
         date: this.formatDate(d),
         readTime: this.timeAgo(d)
       };
+    },
+
+    formatPdfStatus(status) {
+      const s = String(status || "").trim();
+      const labels = {
+        TEXT_EXTRACTED: "Text extracted",
+        NEEDS_OCR: "Needs OCR",
+        EXTRACT_FAILED: "Extract failed",
+        NO_PDF: "No PDF"
+      };
+      return labels[s] || (s ? s.replace(/_/g, " ").toLowerCase() : "Not processed");
+    },
+
+    buildPdfEmbedUrl(url, version) {
+      const raw = String(url || "").trim();
+      if (!raw) return "";
+      const sep = raw.includes("?") ? "&" : "?";
+      const v = encodeURIComponent(String(version || Date.now()));
+      return `${raw}${sep}embed=1&v=${v}#toolbar=1&navpanes=0&view=FitH`;
+    },
+
+    async renderPdfCanvas() {
+      if (!this.activePost?.pdfEmbedUrl || this.pdfTab !== "original") return;
+
+      const host = this.$refs.pdfCanvasHost;
+      if (!host) return;
+
+      const taskId = this.pdfRenderTaskId + 1;
+      this.pdfRenderTaskId = taskId;
+      this.pdfRenderStatus = "loading";
+      this.pdfRenderError = "";
+      host.innerHTML = "";
+
+      try {
+        const sourceUrl = String(this.activePost.pdfEmbedUrl).split("#")[0];
+        const loadingTask = pdfjsLib.getDocument({
+          url: sourceUrl,
+          withCredentials: false,
+          disableAutoFetch: false,
+          disableStream: false,
+        });
+        const pdf = await loadingTask.promise;
+
+        if (taskId !== this.pdfRenderTaskId) return;
+
+        const hostWidth = Math.max(320, host.clientWidth || 760);
+        const pageTotal = Math.min(pdf.numPages || 0, 20);
+
+        for (let pageNo = 1; pageNo <= pageTotal; pageNo += 1) {
+          if (taskId !== this.pdfRenderTaskId) return;
+
+          const page = await pdf.getPage(pageNo);
+          const baseViewport = page.getViewport({ scale: 1 });
+          const scale = Math.min(2, Math.max(0.7, (hostWidth - 24) / baseViewport.width));
+          const viewport = page.getViewport({ scale });
+
+          const pageWrap = document.createElement("div");
+          pageWrap.className = "pdf-canvas-page";
+
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          const ratio = window.devicePixelRatio || 1;
+          canvas.width = Math.floor(viewport.width * ratio);
+          canvas.height = Math.floor(viewport.height * ratio);
+          canvas.style.width = `${Math.floor(viewport.width)}px`;
+          canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+          pageWrap.appendChild(canvas);
+          host.appendChild(pageWrap);
+
+          await page.render({
+            canvasContext: context,
+            viewport,
+            transform: ratio !== 1 ? [ratio, 0, 0, ratio, 0, 0] : null,
+          }).promise;
+        }
+
+        this.pdfRenderStatus = "ready";
+      } catch (error) {
+        if (taskId !== this.pdfRenderTaskId) return;
+        this.pdfRenderStatus = "error";
+        this.pdfRenderError = error?.message || "Unable to render PDF.";
+      }
     },
 
     parseMaybeJson(v) {
@@ -618,6 +790,68 @@ export default {
 
       const noHtml = s.replace(/<\/?[^>]+(>|$)/g, " ");
       return noHtml.split(/\n+/).map((x) => x.trim()).filter(Boolean);
+    },
+
+    isDocumentContent(category, desc) {
+      const cat = String(category || "").trim().toLowerCase();
+      const html = String(desc || "");
+      return (
+        cat === "document" ||
+        html.includes('class="page-break"') ||
+        /<(h[1-6]|p|ul|ol|li|strong|span)\b/i.test(html)
+      );
+    },
+
+    toDocumentPages(desc) {
+      const html = this.sanitizeDocumentHtml(desc);
+      const pages = html
+        .split(/<div\s+class=["']page-break["']\s*><\/div>/i)
+        .map((page) => page.trim())
+        .filter(Boolean);
+      return pages.length ? pages : [html];
+    },
+
+    sanitizeDocumentHtml(desc) {
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = String(desc || "");
+
+      const allowedTags = new Set(["H1", "H2", "H3", "H4", "P", "BR", "STRONG", "B", "EM", "I", "U", "UL", "OL", "LI", "SPAN", "DIV"]);
+      const allowedStyles = new Set(["text-align", "text-indent", "font-size", "font-weight", "font-style", "text-decoration"]);
+
+      wrapper.querySelectorAll("*").forEach((node) => {
+        if (!allowedTags.has(node.tagName)) {
+          node.replaceWith(document.createTextNode(node.textContent || ""));
+          return;
+        }
+
+        [...node.attributes].forEach((attr) => {
+          const name = attr.name.toLowerCase();
+          if (name === "class" && attr.value === "page-break") return;
+          if (name !== "style") {
+            node.removeAttribute(attr.name);
+            return;
+          }
+
+          const safeStyles = attr.value
+            .split(";")
+            .map((rule) => rule.trim())
+            .filter(Boolean)
+            .map((rule) => {
+              const [prop, ...valueParts] = rule.split(":");
+              const key = String(prop || "").trim().toLowerCase();
+              const value = valueParts.join(":").trim();
+              if (!allowedStyles.has(key)) return "";
+              if (/url|expression|javascript/i.test(value)) return "";
+              return `${key}: ${value}`;
+            })
+            .filter(Boolean);
+
+          if (safeStyles.length) node.setAttribute("style", safeStyles.join("; "));
+          else node.removeAttribute("style");
+        });
+      });
+
+      return wrapper.innerHTML.trim();
     },
 
     resolveImage(url) {
@@ -1207,6 +1441,299 @@ export default {
   color: #374151;
 }
 
+.document-reader {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  margin: 6px auto 10px;
+  padding: 20px 0;
+  background: #eef2f7;
+  border-radius: 18px;
+}
+
+.soft-copy-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 0 24px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 8px 20px rgba(127, 29, 29, 0.12);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.soft-copy-btn:hover {
+  transform: translateY(-1px);
+  border-color: #fca5a5;
+  box-shadow: 0 12px 26px rgba(127, 29, 29, 0.18);
+}
+
+.document-paper {
+  box-sizing: border-box;
+  width: min(794px, 100%);
+  min-height: 1123px;
+  padding: 72px 64px;
+  border: 1px solid #d9dee7;
+  background: #fbfcfe;
+  box-shadow: 0 18px 45px rgba(30, 41, 59, 0.13);
+  color: #25282d;
+  font-family: Arial, "Noto Sans Lao", "Noto Sans Thai", sans-serif;
+  font-size: 18px;
+  line-height: 1.55;
+  letter-spacing: 0;
+}
+
+.document-paper :deep(h1),
+.document-paper :deep(h2),
+.document-paper :deep(h3),
+.document-paper :deep(h4) {
+  margin: 0 0 42px;
+  font-size: 18px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.document-paper :deep(p) {
+  margin: 0 0 12px;
+}
+
+.document-paper :deep(ul),
+.document-paper :deep(ol) {
+  margin: 0 0 22px 24px;
+  padding-left: 20px;
+}
+
+.document-paper :deep(li) {
+  margin: 0 0 5px;
+}
+
+.pdf-viewer-section {
+  margin-top: 22px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  background: linear-gradient(135deg, rgba(254, 242, 242, 0.95), rgba(255, 247, 237, 0.9));
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+}
+
+.pdf-viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.pdf-copy {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pdf-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  flex: 0 0 auto;
+}
+
+.pdf-title {
+  font-weight: 700;
+  color: #111827;
+}
+
+.pdf-sub {
+  margin-top: 2px;
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.pdf-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pdf-link {
+  flex: 0 0 auto;
+  text-decoration: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: #ffffff;
+  background: #b91c1c;
+  box-shadow: 0 10px 22px rgba(185, 28, 28, 0.22);
+}
+
+.pdf-link.ghost {
+  color: #b91c1c;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  box-shadow: none;
+}
+
+.pdf-frame-wrap {
+  height: min(78vh, 820px);
+  min-height: 560px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #111827;
+}
+
+.pdf-canvas-wrap {
+  height: auto;
+  max-height: none;
+  min-height: 240px;
+  padding: 14px;
+  background: #475569;
+  overflow: auto;
+}
+
+.pdf-canvas-host {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.pdf-canvas-page {
+  max-width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.28);
+}
+
+.pdf-canvas-page canvas {
+  max-width: 100%;
+  height: auto !important;
+  display: block;
+}
+
+.pdf-render-state {
+  padding: 24px 12px;
+  text-align: center;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.pdf-render-state.error {
+  color: #fecaca;
+}
+
+.pdf-tabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 5px;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(239, 68, 68, 0.12);
+}
+
+.pdf-tab {
+  border: 0;
+  border-radius: 999px;
+  padding: 9px 13px;
+  background: transparent;
+  color: #6b7280;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pdf-tab.active {
+  color: #ffffff;
+  background: #b91c1c;
+  box-shadow: 0 8px 18px rgba(185, 28, 28, 0.18);
+}
+
+.pdf-frame {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 0;
+  background: #ffffff;
+}
+
+.pdf-text-panel {
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.82);
+  overflow: hidden;
+}
+
+.pdf-text-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  color: #6b7280;
+  font-size: 0.86rem;
+}
+
+.pdf-status {
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(107, 114, 128, 0.1);
+  color: #374151;
+  font-weight: 800;
+}
+
+.pdf-status.TEXT_EXTRACTED {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+.pdf-status.NEEDS_OCR {
+  background: rgba(245, 158, 11, 0.14);
+  color: #92400e;
+}
+
+.pdf-status.EXTRACT_FAILED {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.pdf-text {
+  max-height: 520px;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  font-size: 0.94rem;
+  line-height: 1.75;
+  color: #1f2937;
+}
+
+.pdf-empty-text {
+  padding: 24px 16px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
 /* RIGHT */
 .detail-sidebar {
   display: flex;
@@ -1621,6 +2148,25 @@ export default {
   .lb-counter {
     bottom: 74px;
   }
+
+  .pdf-viewer-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pdf-actions {
+    width: 100%;
+  }
+
+  .pdf-link {
+    flex: 1 1 0;
+    text-align: center;
+  }
+
+  .pdf-frame-wrap {
+    height: 70vh;
+    min-height: 460px;
+  }
 }
 
 /* ✅ smaller nav on tiny mobile */
@@ -1630,5 +2176,14 @@ export default {
     height: 42px;
   }
   .lb-nav-icon { font-size: 1.45rem; }
+
+  .pdf-viewer-section {
+    padding: 10px;
+    border-radius: 16px;
+  }
+
+  .pdf-frame-wrap {
+    min-height: 380px;
+  }
 }
 </style>
