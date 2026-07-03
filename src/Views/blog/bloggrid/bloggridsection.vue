@@ -76,8 +76,8 @@
           <div class="blog-card-gradient"></div>
 
           <!-- Image at top of card -->
-          <div class="blog-media">
-            <img :src="post.image" :alt="post.title" loading="lazy" />
+          <div class="blog-media" :class="{ 'document-media': post.isDocument && post.pdfUrl }">
+            <img :src="post.coverImage || post.image || documentPlaceholder" :alt="post.title" loading="lazy" />
             <div class="media-overlay"></div>
           </div>
 
@@ -158,7 +158,11 @@
 
 <script>
 import { gsap } from "gsap";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 import secondfooter from "../../../components/footer/mainfooter/secondfooter.vue";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 // -------------------- Resolve API base from env ONLY --------------------
 // Supports both Vite (import.meta.env.VITE_*) and Vue CLI (process.env.VUE_APP_*)
@@ -221,6 +225,16 @@ const ASSET_BASE = API_BASE.endsWith("/api") ? API_BASE.slice(0, -4) : API_BASE;
 
 // ✅ News endpoint: /api/news
 const NEWS_API_URL = joinBaseAndPath(API_BASE, "/api/news");
+const DOCUMENT_PLACEHOLDER =
+  "data:image/svg+xml;charset=UTF-8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+      <rect width="640" height="360" fill="#eef2f7"/>
+      <rect x="220" y="70" width="200" height="220" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="4"/>
+      <text x="320" y="185" text-anchor="middle" font-family="Arial" font-size="28" font-weight="700" fill="#991b1b">PDF</text>
+      <text x="320" y="222" text-anchor="middle" font-family="Arial" font-size="18" fill="#475569">Document</text>
+    </svg>`
+  );
 
 export default {
   name: "BlogGrid",
@@ -254,7 +268,8 @@ export default {
         { value: 12, label: "December" }
       ],
 
-      posts: []
+      posts: [],
+      documentPlaceholder: DOCUMENT_PLACEHOLDER
     };
   },
 
@@ -389,6 +404,7 @@ export default {
           .filter((p) => p && p.id != null && String(p.id).trim() !== "" && p.title);
 
         this.posts = mapped;
+        this.renderPdfCovers();
 
         this.$nextTick(() => {
           if (this.currentPage > this.totalPages) this.currentPage = 1;
@@ -418,10 +434,18 @@ export default {
         "";
 
       const image = this.resolveImage(raw?.hero_img ?? raw?.image ?? "");
+      const pdfUrl = this.resolveImage(
+        raw?.pdf_file_url ??
+          raw?.pdf_url ??
+          raw?.pdf_file ??
+          raw?.pdfFile ??
+          ""
+      );
 
       const desc =
         raw?.description_news ?? raw?.description ?? raw?.short_desc ?? raw?.excerpt ?? "";
       const excerpt = this.makeExcerpt(desc);
+      const isDocument = this.isDocumentContent(category, desc);
 
       const tags = Array.isArray(raw?.tags)
         ? raw.tags
@@ -437,9 +461,22 @@ export default {
         date: this.formatDate(dateTime),
         readTime: this.formatRelativeTime(dateTime),
         image,
+        coverImage: image,
+        pdfUrl,
+        isDocument,
         excerpt,
         tags
       };
+    },
+
+    isDocumentContent(category, desc) {
+      const cat = String(category || "").trim().toLowerCase();
+      const html = String(desc || "");
+      return (
+        cat === "document" ||
+        html.includes('class="page-break"') ||
+        /<(h[1-6]|p|ul|ol|li|strong|span)\b/i.test(html)
+      );
     },
 
     stripHtml(s) {
@@ -451,6 +488,51 @@ export default {
       if (!clean) return "";
       if (clean.length <= maxLen) return clean;
       return clean.slice(0, maxLen).trim() + "...";
+    },
+
+    async renderPdfCovers() {
+      const targets = this.posts.filter((post) => post.isDocument && post.pdfUrl);
+      if (!targets.length) return;
+
+      await Promise.all(
+        targets.map(async (post) => {
+          try {
+            const cover = await this.renderPdfFirstPage(post.pdfUrl);
+            if (!cover) return;
+
+            const found = this.posts.find((item) => item.id === post.id);
+            if (found) found.coverImage = cover;
+          } catch (error) {
+            console.warn("PDF cover render failed:", post.pdfUrl, error);
+          }
+        })
+      );
+    },
+
+    async renderPdfFirstPage(pdfUrl) {
+      const loadingTask = pdfjsLib.getDocument({
+        url: String(pdfUrl || "").split("#")[0],
+        withCredentials: false,
+        disableAutoFetch: false,
+        disableStream: false
+      });
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(1);
+      const viewportBase = page.getViewport({ scale: 1 });
+      const targetWidth = 640;
+      const scale = targetWidth / viewportBase.width;
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(viewport.width * ratio);
+      canvas.height = Math.floor(viewport.height * ratio);
+      await page.render({
+        canvasContext: context,
+        viewport,
+        transform: ratio !== 1 ? [ratio, 0, 0, ratio, 0, 0] : null
+      }).promise;
+      return canvas.toDataURL("image/jpeg", 0.86);
     },
 
     resolveImage(u) {
@@ -753,6 +835,16 @@ export default {
   display: block;
   transform: scale(1.03);
   transition: transform 0.35s ease, filter 0.35s ease;
+}
+
+.blog-media.document-media {
+  background: #e5eaf1;
+}
+
+.blog-media.document-media img {
+  object-fit: contain;
+  padding: 10px;
+  background: #e5eaf1;
 }
 
 .media-overlay {
