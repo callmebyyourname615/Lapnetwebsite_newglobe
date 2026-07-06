@@ -190,8 +190,9 @@
                 }"
               >
                 <article class="latest-item">
-                  <div class="latest-thumb">
-                    <img :src="post.image" :alt="post.title" />
+                  <div class="latest-thumb" :class="{ 'document-thumb': !post.image }">
+                    <img v-if="post.image" :src="post.image" :alt="post.title" />
+                    <i v-if="!post.image" class="fa-solid fa-file-lines"></i>
                   </div>
                   <div class="latest-content">
                     <p class="latest-date">{{ post.date }}</p>
@@ -798,7 +799,7 @@ export default {
       return (
         cat === "document" ||
         html.includes('class="page-break"') ||
-        /<(h[1-6]|p|ul|ol|li|strong|span)\b/i.test(html)
+        /<(h[1-6]|p|ul|ol|li|strong|span|img)\b/i.test(html)
       );
     },
 
@@ -808,15 +809,121 @@ export default {
         .split(/<div\s+class=["']page-break["']\s*><\/div>/i)
         .map((page) => page.trim())
         .filter(Boolean);
-      return pages.length ? pages : [html];
+      const normalizedPages = pages.length ? pages : [html];
+      return normalizedPages.map((page) => this.toRenderableDocumentPage(page)).filter(Boolean);
+    },
+
+    appendStyle(node, cssText) {
+      const current = String(node.getAttribute("style") || "").trim();
+      node.setAttribute("style", current ? `${current}; ${cssText}` : cssText);
+    },
+
+    normalizeDocumentPageForSnapshot(pageHtml) {
+      const holder = document.createElement("div");
+      holder.innerHTML = String(pageHtml || "");
+
+      holder.querySelectorAll("*").forEach((node) => {
+        if (node.nodeType !== 1) return;
+        const tag = node.tagName;
+        const rawStyle = String(node.getAttribute("style") || "");
+        const alignMatch = rawStyle.match(/text-align\s*:\s*(left|right|center|justify)/i);
+        const indentMatch = rawStyle.match(/text-indent\s*:\s*([^;]+)/i);
+        const fontSizeMatch = rawStyle.match(/font-size\s*:\s*([^;]+)/i);
+        const fontWeightMatch = rawStyle.match(/font-weight\s*:\s*([^;]+)/i);
+        const textDecorationMatch = rawStyle.match(/text-decoration\s*:\s*([^;]+)/i);
+        const fontStyleMatch = rawStyle.match(/font-style\s*:\s*([^;]+)/i);
+        const keep = [];
+
+        if (alignMatch) keep.push(`text-align: ${alignMatch[1].toLowerCase()}`);
+        if (indentMatch) keep.push(`text-indent: ${indentMatch[1].trim()}`);
+        if (fontSizeMatch) keep.push(`font-size: ${fontSizeMatch[1].trim()}`);
+        if (fontWeightMatch) keep.push(`font-weight: ${fontWeightMatch[1].trim()}`);
+        if (textDecorationMatch) keep.push(`text-decoration: ${textDecorationMatch[1].trim()}`);
+        if (fontStyleMatch && !/^normal$/i.test(fontStyleMatch[1].trim())) keep.push(`font-style: ${fontStyleMatch[1].trim()}`);
+
+        node.removeAttribute("style");
+        if (keep.length) node.setAttribute("style", keep.join("; "));
+
+        if (/^H[1-4]$/.test(tag)) {
+          this.appendStyle(node, "margin: 0 0 42px; font-size: 18px; line-height: 1.45; font-weight: 700");
+        } else if (tag === "P") {
+          this.appendStyle(node, "margin: 0 0 12px; line-height: 1.55; font-weight: 400");
+        } else if (tag === "UL") {
+          this.appendStyle(node, "margin: 0 0 22px 24px; padding-left: 20px; list-style: disc outside");
+        } else if (tag === "OL") {
+          this.appendStyle(node, "margin: 0 0 22px 24px; padding-left: 20px; list-style: decimal outside");
+        } else if (tag === "LI") {
+          this.appendStyle(node, "margin: 0 0 5px; padding-left: 4px; display: list-item; line-height: 1.55; font-weight: 400");
+        } else if (tag === "STRONG" || tag === "B") {
+          this.appendStyle(node, "font-weight: 700");
+        }
+      });
+
+      const firstHeading = holder.querySelector("h1, h2, h3, h4");
+      if (firstHeading) {
+        this.appendStyle(firstHeading, "display: block; width: 100%; text-align: center");
+      }
+
+      return holder.innerHTML;
+    },
+
+    extractLegacySnapshotHtml(pageHtml) {
+      const page = String(pageHtml || "").trim();
+      if (!page) return "";
+
+      if (page.includes("document-page-svg") && page.includes("data:image/svg+xml")) {
+        const holder = document.createElement("div");
+        holder.innerHTML = page;
+        const img = holder.querySelector("img.document-page-svg");
+        const src = String(img?.getAttribute("src") || "");
+        const payload = src.replace(/^data:image\/svg\+xml(?:;charset=[^,]+)?,/i, "");
+        try {
+          const svg = decodeURIComponent(payload);
+          const svgHolder = document.createElement("div");
+          svgHolder.innerHTML = svg;
+          const snapshot = svgHolder.querySelector(".paperSnapshot");
+          if (snapshot) return snapshot.innerHTML;
+        } catch {}
+      }
+
+      if (page.includes("document-svg-page") && /<svg[\s>]/i.test(page)) {
+        const holder = document.createElement("div");
+        holder.innerHTML = page;
+        const snapshot = holder.querySelector(".paperSnapshot");
+        if (snapshot) return snapshot.innerHTML;
+      }
+
+      return page;
+    },
+
+    toRenderableDocumentPage(pageHtml) {
+      const extracted = this.extractLegacySnapshotHtml(pageHtml);
+      return this.normalizeDocumentPageForSnapshot(extracted);
     },
 
     sanitizeDocumentHtml(desc) {
       const wrapper = document.createElement("div");
       wrapper.innerHTML = String(desc || "");
 
-      const allowedTags = new Set(["H1", "H2", "H3", "H4", "P", "BR", "STRONG", "B", "EM", "I", "U", "UL", "OL", "LI", "SPAN", "DIV"]);
-      const allowedStyles = new Set(["text-align", "text-indent", "font-size", "font-weight", "font-style", "text-decoration"]);
+      const allowedTags = new Set(["H1", "H2", "H3", "H4", "P", "BR", "STRONG", "B", "EM", "I", "U", "UL", "OL", "LI", "SPAN", "DIV", "IMG"]);
+      const allowedStyles = new Set([
+        "color",
+        "font-family",
+        "font-size",
+        "font-style",
+        "font-weight",
+        "line-height",
+        "margin",
+        "margin-bottom",
+        "margin-left",
+        "margin-right",
+        "margin-top",
+        "padding",
+        "padding-left",
+        "text-align",
+        "text-decoration",
+        "text-indent",
+      ]);
 
       wrapper.querySelectorAll("*").forEach((node) => {
         if (!allowedTags.has(node.tagName)) {
@@ -826,7 +933,23 @@ export default {
 
         [...node.attributes].forEach((attr) => {
           const name = attr.name.toLowerCase();
-          if (name === "class" && attr.value === "page-break") return;
+          if (name === "class") {
+            const safeClasses = String(attr.value || "")
+              .split(/\s+/)
+              .filter((klass) => ["page-break", "document-svg-page", "document-page-svg"].includes(klass));
+            if (safeClasses.length) {
+              node.setAttribute("class", safeClasses.join(" "));
+              return;
+            }
+            node.removeAttribute(attr.name);
+            return;
+          }
+          if (node.tagName === "IMG") {
+            if (name === "src" && /^data:image\/svg\+xml/i.test(attr.value)) return;
+            if (["alt", "width", "height"].includes(name)) return;
+            node.removeAttribute(attr.name);
+            return;
+          }
           if (name !== "style") {
             node.removeAttribute(attr.name);
             return;
@@ -1492,21 +1615,37 @@ export default {
   font-family: Arial, "Noto Sans Lao", "Noto Sans Thai", sans-serif;
   font-size: 18px;
   line-height: 1.55;
+  font-weight: 400;
   letter-spacing: 0;
+  white-space: normal;
 }
 
 .document-paper :deep(h1),
 .document-paper :deep(h2),
 .document-paper :deep(h3),
 .document-paper :deep(h4) {
+  display: block !important;
+  width: 100% !important;
   margin: 0 0 42px;
   font-size: 18px;
   line-height: 1.45;
   font-weight: 700;
 }
 
+.document-paper :deep(h1:first-child),
+.document-paper :deep(h2:first-child),
+.document-paper :deep(h3:first-child),
+.document-paper :deep(h4:first-child) {
+  text-align: center !important;
+}
+
+.document-paper :deep(span) {
+  display: inline !important;
+}
+
 .document-paper :deep(p) {
   margin: 0 0 12px;
+  font-weight: 400;
 }
 
 .document-paper :deep(ul),
@@ -1515,8 +1654,60 @@ export default {
   padding-left: 20px;
 }
 
+.document-paper :deep(ul) {
+  list-style: disc outside;
+}
+
+.document-paper :deep(ol) {
+  list-style: decimal outside;
+}
+
 .document-paper :deep(li) {
   margin: 0 0 5px;
+  padding-left: 4px;
+  font-weight: 400;
+  display: list-item;
+}
+
+.document-paper :deep(strong),
+.document-paper :deep(b) {
+  font-weight: 700;
+}
+
+.document-paper :deep(em),
+.document-paper :deep(i) {
+  font-style: italic;
+}
+
+.document-paper :deep(u) {
+  text-decoration: underline;
+}
+
+.document-paper:has(.document-page-svg),
+.document-paper:has(.document-svg-page svg) {
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.document-paper :deep(.document-svg-page) {
+  width: 100%;
+  background: #fbfcfe;
+}
+
+.document-paper :deep(.document-page-svg) {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fbfcfe;
+}
+
+.document-paper :deep(.document-svg-page svg) {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fbfcfe;
 }
 
 .pdf-viewer-section {
@@ -1872,9 +2063,9 @@ export default {
 
 .latest-item {
   display: grid;
-  grid-template-columns: 80px minmax(0, 1fr);
-  gap: 10px;
-  padding: 8px;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px;
   border-radius: 14px;
   cursor: pointer;
   transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease;
@@ -1887,9 +2078,13 @@ export default {
 }
 
 .latest-thumb {
+  width: 72px;
+  height: 72px;
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid rgba(209, 213, 219, 0.9);
+  background: #f8fafc;
+  flex-shrink: 0;
 }
 
 .latest-thumb img {
@@ -1899,10 +2094,23 @@ export default {
   display: block;
 }
 
+.latest-thumb.document-thumb {
+  display: grid;
+  place-items: center;
+  border-color: rgba(37, 99, 235, 0.22);
+  background: linear-gradient(135deg, #eff6ff, #ffffff);
+  color: #1d4ed8;
+}
+
+.latest-thumb.document-thumb i {
+  font-size: 28px;
+}
+
 .latest-content {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .latest-date {
@@ -1912,12 +2120,19 @@ export default {
 
 .latest-title {
   font-size: 0.9rem;
+  line-height: 1.35;
   color: #020617;
+  margin: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .latest-tag {
   font-size: 0.78rem;
   color: #1d4ed8;
+  margin: 0;
 }
 
 .latest-empty {
