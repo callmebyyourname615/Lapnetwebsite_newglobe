@@ -134,9 +134,10 @@
             <section
               v-for="(pageHtml, index) in activePost.documentPages"
               :key="index"
-              class="document-paper"
-              v-html="pageHtml"
-            ></section>
+              class="document-paper-frame"
+            >
+              <div class="document-paper" v-html="pageHtml"></div>
+            </section>
           </article>
 
         </main>
@@ -1603,9 +1604,16 @@ export default {
   box-shadow: 0 12px 26px rgba(127, 29, 29, 0.18);
 }
 
+.document-paper-frame {
+  --paper-scale: 1;
+  width: min(794px, 100%);
+  position: relative;
+}
+
 .document-paper {
   box-sizing: border-box;
-  width: min(794px, 100%);
+  width: 794px;
+  max-width: 100%;
   min-height: 1123px;
   padding: 72px 64px;
   border: 1px solid #d9dee7;
@@ -1618,6 +1626,7 @@ export default {
   font-weight: 400;
   letter-spacing: 0;
   white-space: normal;
+  transform-origin: top center;
 }
 
 .document-paper :deep(h1),
@@ -2321,6 +2330,39 @@ export default {
 }
 
 @media (max-width: 900px) {
+  .detail-page {
+    padding: 34px 12px 28px;
+  }
+
+  .detail-main {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .document-reader {
+    padding: 12px 0;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .soft-copy-btn {
+    margin-left: 12px;
+  }
+
+  .document-paper-frame {
+    width: calc(794px * var(--paper-scale));
+    max-width: 100%;
+    min-height: calc(1123px * var(--paper-scale));
+  }
+
+  .document-paper {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    max-width: none;
+    transform: translateX(-50%) scale(var(--paper-scale));
+  }
+
   .detail-layout {
     display: flex;
     flex-direction: column;
@@ -2384,8 +2426,22 @@ export default {
   }
 }
 
+@media (max-width: 860px) {
+  .document-paper-frame { --paper-scale: 0.78; }
+}
+
+@media (max-width: 760px) {
+  .document-paper-frame { --paper-scale: 0.68; }
+}
+
+@media (max-width: 680px) {
+  .document-paper-frame { --paper-scale: 0.58; }
+}
+
 /* ✅ smaller nav on tiny mobile */
 @media (max-width: 640px) {
+  .document-paper-frame { --paper-scale: 0.52; }
+
   .lb-nav {
     width: 42px;
     height: 42px;
@@ -2400,5 +2456,17 @@ export default {
   .pdf-frame-wrap {
     min-height: 380px;
   }
+}
+
+@media (max-width: 560px) {
+  .document-paper-frame { --paper-scale: 0.46; }
+}
+
+@media (max-width: 480px) {
+  .document-paper-frame { --paper-scale: 0.39; }
+}
+
+@media (max-width: 400px) {
+  .document-paper-frame { --paper-scale: 0.34; }
 }
 </style>
