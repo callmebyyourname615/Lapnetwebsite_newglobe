@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
 import product4_footerlogomember_tab2 from "../../components/footer/logomemberfooter/product4_footerlogomember_tab2.vue";
 import product4_footerlogomember from "../../components/footer/logomemberfooter/product4_footerlogomember.vue";
 import product5tech from "../techbenetfit/product5tech.vue";
@@ -14,21 +14,9 @@ const sectionsTab2 = [
   { id: "member", label: "ສະມາຊິກ", icon: "box" },
 ];
 
-const props = defineProps({
-  memberLogos: { type: Array, default: () => [] },
-});
-
-/** ===== Fetch member logos from API and match by bank code (app) ===== */
+/** ===== สมาชิกบริการโอนเงินสกุลต่างประเทศ ===== */
 const API_BASE = String(import.meta.env.VITE_API_BASE_URL || "").trim().replace(/\/+$/, "");
 const ASSET_BASE = API_BASE.endsWith("/api") ? API_BASE.slice(0, -4) : API_BASE;
-
-function resolveUrl(src) {
-  const s = String(src || "").trim();
-  if (!s) return "";
-  if (/^data:|^blob:|^https?:\/\//i.test(s)) return s;
-  return ASSET_BASE + (s.startsWith("/") ? s : "/" + s);
-}
-
 const apiMembers = ref([]);
 
 const fetchMembers = async () => {
@@ -49,17 +37,52 @@ const fetchMembers = async () => {
 onMounted(fetchMembers);
 
 const normCode = (s) => String(s || "").toUpperCase().replace(/\s+/g, "").trim();
+const isEnabled = (value) => value === true || value === 1 || String(value ?? "").trim() === "1";
+const logoForBankcode = (bankcode) => {
+  const code = String(bankcode || "").trim().toLowerCase();
+  return code ? `/logos/${code}.png` : "";
+};
+const resolveApiImage = (source) => {
+  const value = String(source || "").trim();
+  if (!value || /^data:|^blob:|^https?:\/\//i.test(value)) return value;
+  return `${ASSET_BASE}${value.startsWith("/") ? value : `/${value}`}`;
+};
 
-/** Match each MEMBER_BANKS entry to an API record by `Bankcode` (compared to bank.app).
- *  Use API `image_url` (absolute URL) when matched, otherwise fall back to local /logos/*. */
+/**
+ * ใช้สมาชิกที่เปิดบริการ high_value จาก API เท่านั้น
+ * ส่วน "ธนาคารที่ให้บริการ" ใช้ image URL จาก API
+ */
 const serviceLogos = computed(() => {
-  return MEMBER_BANKS.map((bank) => {
-    const code = normCode(bank.app);
-    const match = apiMembers.value.find((m) => normCode(m?.Bankcode) === code);
-    const rawSrc = match?.image_url ?? match?.image ?? bank.logo;
-    return { src: resolveUrl(rawSrc) || bank.logo, alt: bank.app || bank.name };
-  });
+  const usedCodes = new Set();
+
+  return apiMembers.value
+    .filter((member) => isEnabled(member?.high_value ?? member?.highValue))
+    .map((member) => {
+      const bankcode = normCode(member?.Bankcode ?? member?.bankcode ?? member?.bank_code);
+      return {
+        bankcode,
+        memberId: Number(member?.idmember ?? member?.id ?? member?.member_id ?? 0),
+        src: resolveApiImage(member?.image_url ?? member?.image ?? member?.logo ?? member?.img ?? member?.photo),
+        alt: String(member?.BanknameEN ?? member?.BanknameLA ?? bankcode ?? "Member bank"),
+      };
+    })
+    .filter((logo) => logo.bankcode && logo.src && !usedCodes.has(logo.bankcode) && usedCodes.add(logo.bankcode))
+    .sort((a, b) => a.bankcode.localeCompare(b.bankcode));
 });
+
+const orbitLogos = computed(() =>
+  serviceLogos.value
+    .map((logo) => ({ ...logo, src: logoForBankcode(logo.bankcode) }))
+    .filter((logo) => logo.src)
+);
+
+const footerServiceLogos = computed(() =>
+  [...serviceLogos.value].sort((a, b) => {
+    if (a.memberId === 1) return -1;
+    if (b.memberId === 1) return 1;
+    return a.memberId - b.memberId;
+  })
+);
 
 /** ===== Orbiting integrations hero (ported from orbiting-integrations) ===== */
 // Two innermost rings have no logos (only the guide circles).
@@ -75,35 +98,10 @@ const ORBIT_RINGS_BASE = [
   { size: 1750, duration: 160, direction: "clockwise", angles: [-145, -75, -10, 60, 125, 195, 255], badge: 52 },
 ];
 
-/** ===== Member banks participating in the program ===== */
-const MEMBER_BANKS = [
-  { name: "ທະນາຄານການຄ້າຕ່າງປະເທດລາວ ມະຫາຊົນ", app: "BCEL ", logo: "/logos/logo1.png" },
-  { name: "ທະນາຄານ ສົ່ງເສີມກະສິກຳ ຈຳກັດ", app: "APB", logo: "/logos/logo3.png" },
-  { name: "ທະນາຄານ ຮ່ວມພັດທະນາ", app: "JDB ", logo: "/logos/logo4.png" },
-  { name: "ທະນາຄານ ຮ່ວມທຸລະກິດ ລາວ - ຫວຽດ", app: "LVB ", logo: "/logos/logo6.png" },
-  { name: "ທະນາຄານ ບີໄອຊີ ລາວ ຈຳກັດ", app: "BIC ", logo: "/logos/logo11.png" },
-  { name: "ທະນາຄານ ເອສທີ ຈຳກັດ", app: "STB", logo: "/logos/logo17.png" },
-  { name: "ທະນາຄານ ພົງສະຫວັນ", app: "PSVB", logo: "/logos/logo15.png" },
-  { name: "ທະນາຄານ ອິນໂດຈີນ ຈຳກັດ", app: "IB", logo: "/logos/logo10.png" },
-  { name: "ທະນາຄານ ລາວຝຣັ່ງ ຈຳກັດ", app: "BFL ", logo: "/logos/logo12.png" },
-  { name: "ທະນາຄານ ຊາຄອມແບັງ ລາວ", app: "Sacom", logo: "/logos/logo13.png" },
-];
-
-const FALLBACK_LOGOS = [
-  { src: "/logos/logo1.png", alt: "Bank 1" },
-  { src: "/logos/logo3.png", alt: "Bank 3" },
-  { src: "/logos/logo4.png", alt: "Bank 4" },
-  { src: "/logos/logo6.png", alt: "Bank 6" },
-  { src: "/logos/logo11.png", alt: "Bank 11" },
-  { src: "/logos/logo17.png", alt: "Bank 17" },
-  { src: "/logos/logo10.png", alt: "Bank 10" },
-  { src: "/logos/logo15.png", alt: "Bank 15" },
-  { src: "/logos/logo12.png", alt: "Bank 12" },
-  { src: "/logos/logo13.png", alt: "Bank 13" },
-];
-
 const orbitRings = computed(() => {
-  const pool = FALLBACK_LOGOS;
+  const pool = orbitLogos.value;
+  if (!pool.length) return [];
+
   let cursor = 0;
   return ORBIT_RINGS_BASE.map((ring) => {
     const icons = ring.angles.map((angle) => {
@@ -408,7 +406,7 @@ function bubbleStyle(logo) {
           `USD <i class='fa-solid fa-left-right currency-swap'></i> USD: ໂອນຈາກບັນຊີສະກຸນເງິນໂດລາ ຫາ ບັນຊີສະກຸນເງິນໂດລາ`,
           `THB <i class='fa-solid fa-left-right currency-swap'></i> THB: ໂອນຈາກບັນຊີສະກຸນເງິນບາດ ຫາ ບັນຊີສະກຸນເງິນບາດ`,
         ]"
-        :logos="serviceLogos"
+        :logos="footerServiceLogos"
       />
     </div>
   </div>

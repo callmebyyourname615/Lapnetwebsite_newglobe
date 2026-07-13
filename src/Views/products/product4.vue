@@ -141,10 +141,10 @@ const fetchMemberLogos = async () => {
       .filter((m) => String(m?.mobiletransfer) === "1" || m?.mobiletransfer === true)
       // order by idmember asc
       .sort((a, b) => getMemberId(a) - getMemberId(b))
-      // map to {src, alt}
+      // ส่วน "ธนาคารที่ให้บริการ" ใช้โลโก้ธนาคารที่ API จัดเก็บไว้
       .map((m) => {
         const rawSrc = m?.image ?? m?.image_url ?? m?.logo ?? m?.img ?? m?.photo ?? m?.path ?? m?.src ?? "";
-        const alt = m?.alt ?? m?.name ?? m?.bank_name ?? m?.title ?? "Member logo";
+        const alt = m?.BanknameEN ?? m?.BanknameLA ?? m?.alt ?? m?.name ?? m?.bank_name ?? "Member bank";
         return { src: normalizeUrl(rawSrc), alt };
       })
       .filter((x) => !!x.src);
@@ -165,28 +165,22 @@ const COLUMN_X = {
 
 const SIZE_PX = { small: 64, medium: 80, large: 104 };
 
-const CLOUD_LOGOS = [
-  { src: "/logos/logo1.png", alt: "Bank 1", column: "left", top: 40, size: "small", delay: 0 },
-  { src: "/logos/logo2.png", alt: "Bank 2", column: "center", top: 80, size: "large", delay: 0.3 },
-  { src: "/logos/logo3.png", alt: "Bank 3", column: "right", top: 20, size: "large", delay: 0.1 },
-  { src: "/logos/logo4.png", alt: "Bank 4", column: "farRight", top: 160, size: "medium", delay: 0.8 },
-  { src: "/logos/logo5.png", alt: "Bank 5", column: "left", top: 220, size: "medium", delay: 0.6 },
-  { src: "/logos/logo6.png", alt: "Bank 6", column: "center", top: 300, size: "small", delay: 1.2 },
-  { src: "/logos/logo7.png", alt: "Bank 7", column: "right", top: 240, size: "large", delay: 1.5 },
-  { src: "/logos/logo8.png", alt: "Bank 8", column: "farRight", top: 340, size: "small", delay: 0.4 },
-  { src: "/logos/logo9.png", alt: "Bank 9", column: "left", top: 400, size: "large", delay: 1.2 },
-  { src: "/logos/logo10.png", alt: "Bank 10", column: "center", top: 460, size: "medium", delay: 0.9 },
-  { src: "/logos/logo11.png", alt: "Bank 11", column: "right", top: 440, size: "small", delay: 1.0 },
-  { src: "/logos/logo12.png", alt: "Bank 12", column: "farRight", top: 500, size: "large", delay: 1.8 },
-  { src: "/logos/logo13.png", alt: "Bank 13", column: "left", top: 580, size: "small", delay: 2.1 },
-  { src: "/logos/logo14.png", alt: "Bank 14", column: "center", top: 620, size: "large", delay: 1.5 },
-  { src: "/logos/logo15.png", alt: "Bank 15", column: "right", top: 620, size: "medium", delay: 0.7 },
-  { src: "/logos/logo16.png", alt: "Bank 16", column: "farRight", top: 680, size: "small", delay: 2.4 },
-  { src: "/logos/logo17.png", alt: "Bank 17", column: "left", top: 760, size: "medium", delay: 1.8 },
-  { src: "/logos/logo18.png", alt: "Bank 18", column: "center", top: 780, size: "small", delay: 2.7 },
-  { src: "/logos/logo19.png", alt: "Bank 19", column: "right", top: 800, size: "medium", delay: 1.9 },
-  { src: "/logos/logo20.png", alt: "Bank 20", column: "farRight", top: 860, size: "large", delay: 0.5 },
+const LOGO_FILES = [
+  "acleda.png", "apb.png", "bcel.png", "bfl.png", "bic.png", "boc.png", "icbc.png", "idb.png", "jdb.png", "kbank.png",
+  "ldb.png", "lvb.png", "mb.png", "mjbl.png", "mmoney.png", "psvb.png", "sacom.png", "stb.png", "umoney.png", "vtb.png",
 ];
+
+const CLOUD_COLUMNS = ["left", "center", "right", "farRight"];
+const CLOUD_SIZES = ["small", "large", "large", "medium", "medium", "small", "large", "small"];
+
+const CLOUD_LOGOS = LOGO_FILES.map((file, index) => ({
+  src: `/logos/${file}`,
+  alt: file.replace(/\.[^.]+$/, "").toUpperCase(),
+  column: CLOUD_COLUMNS[index % CLOUD_COLUMNS.length],
+  top: 28 + Math.floor(index / CLOUD_COLUMNS.length) * 190 + [36, 78, 0, 122][index % CLOUD_COLUMNS.length],
+  size: CLOUD_SIZES[index % CLOUD_SIZES.length],
+  delay: (index % 9) * 0.3,
+}));
 
 function bubbleStyle(logo) {
   const sizePx = SIZE_PX[logo.size];
