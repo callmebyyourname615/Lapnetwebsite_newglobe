@@ -23,6 +23,13 @@ export default defineConfig({
     port: 5173,
     host: "127.0.0.1",
     strictPort: true,
+    proxy: {
+      "/uploads": {
+        target: "https://www.lapnet.com.la",
+        changeOrigin: true,
+        secure: true,
+      },
+    },
     cors: {
       origin: /^https?:\/\/(?:(?:[^:]+\.)?localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/,
     },

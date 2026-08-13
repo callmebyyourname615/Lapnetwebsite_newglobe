@@ -204,10 +204,10 @@ onBeforeUnmount(() => {
     position: relative;
     z-index: 1;
     display: flex;
-    gap: 4rem;
+    gap: 3rem;
     align-items: center;
     justify-content: space-between;
-    max-width: 1100px;
+    max-width: 1240px;
     margin: 0 auto;
 }
 
@@ -323,8 +323,9 @@ onBeforeUnmount(() => {
 /* 3D card */
 .mockup-card {
     position: relative;
-    width: 580px;
-    height: 620px;
+    width: min(560px, 42vw);
+    height: auto;
+    aspect-ratio: 1122 / 1448;
     border-radius: 26px;
 
     overflow: hidden;
@@ -372,14 +373,15 @@ onBeforeUnmount(() => {
     overflow: hidden;
     transform: translateZ(30px);
     box-shadow: 0 16px 45px rgba(9, 22, 70, 0.22);
-    background: #000;
+    background: #06175d;
     /* in case image has transparency */
 }
 
 .mockup-image {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    display: block;
 }
 
 /* ✨ premium shimmer — three layered GSAP-driven sweeps */
@@ -532,8 +534,8 @@ onBeforeUnmount(() => {
     }
 
     .mockup-card {
-        width: 380px;
-        height: 420px;
+        width: min(420px, 92vw);
+        aspect-ratio: 1122 / 1448;
     }
 
     .mockup-frame {

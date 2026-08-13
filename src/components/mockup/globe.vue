@@ -60,6 +60,8 @@ const API_BASE = resolveEnvBaseUrl();
 
 // Asset base for images/files (strip trailing "/api" if env includes it)
 const ASSET_BASE = API_BASE.endsWith("/api") ? API_BASE.slice(0, -4) : API_BASE;
+// In local dev, use Vite's same-origin /uploads proxy so WebGL textures are not blocked by CORS.
+const TEXTURE_ASSET_BASE = import.meta.env.DEV ? "" : ASSET_BASE;
 
 // ✅ API endpoint: /api/members (from env base only)
 const MEMBERS_API_URL = joinBaseAndPath(API_BASE, "/api/members");
@@ -286,12 +288,16 @@ function rewriteBadAbsoluteToEnvBase(absoluteUrl: string) {
 
     // Rewrite when backend returns localhost (wrong outside local machine)
     if (isLoopbackHost(u.hostname)) {
-      return ASSET_BASE ? joinBaseAndPath(ASSET_BASE, fullPath) : absoluteUrl;
+      return joinBaseAndPath(TEXTURE_ASSET_BASE, fullPath);
     }
 
     // Rewrite when it looks like an asset path but host does not match our env asset base
     if (ASSET_BASE_URL && isLikelyAssetPath(u.pathname) && u.hostname !== ASSET_BASE_URL.hostname) {
-      return joinBaseAndPath(ASSET_BASE, fullPath);
+      return joinBaseAndPath(TEXTURE_ASSET_BASE, fullPath);
+    }
+
+    if (import.meta.env.DEV && isLikelyAssetPath(u.pathname) && u.hostname === ASSET_BASE_URL?.hostname) {
+      return joinBaseAndPath(TEXTURE_ASSET_BASE, fullPath);
     }
 
     return absoluteUrl;
@@ -314,10 +320,10 @@ const resolveImage = (img: any) => {
   }
 
   // Absolute path from server (e.g. "/uploads/..") => use ASSET_BASE
-  if (s.startsWith("/")) return joinBaseAndPath(ASSET_BASE, s);
+  if (s.startsWith("/")) return joinBaseAndPath(TEXTURE_ASSET_BASE, s);
 
   // Relative path (e.g. "uploads/..") => use ASSET_BASE
-  return joinBaseAndPath(ASSET_BASE, "/" + s);
+  return joinBaseAndPath(TEXTURE_ASSET_BASE, "/" + s);
 };
 
 const pickMemberImage = (item: any) => {
@@ -441,6 +447,7 @@ const CFG = {
   radius: 1.22,
   dots: lowPower ? 1600 : 4200,
   dotColor: "#67B7FF",
+  meshColor: "#4FAAFF",
   arcColor: "#2D7FFF",
   arcPalette: ["#2D7FFF", "#4F9DFF", "#6AD6FF", "#3B82F6"],
 };
@@ -701,6 +708,104 @@ function makeDotGlobe(points: THREE.Vector3[]) {
   });
 
   return { pts, mat };
+}
+
+function makeMeshNetwork(points: THREE.Vector3[]) {
+  const sampleCount = Math.min(points.length, lowPower ? 180 : 360);
+  const maxLinksPerPoint = lowPower ? 2 : 3;
+  const maxAngle = lowPower ? 0.19 : 0.16;
+  const sampled: THREE.Vector3[] = [];
+  const used = new Set<number>();
+
+  while (sampled.length < sampleCount && used.size < points.length) {
+    const idx = Math.floor(Math.random() * points.length);
+    if (used.has(idx)) continue;
+    used.add(idx);
+    sampled.push(points[idx]!.clone().normalize().multiplyScalar(CFG.radius + 0.008));
+  }
+
+  const segments: number[] = [];
+  const seeds: number[] = [];
+  const linked = new Set<string>();
+
+  for (let i = 0; i < sampled.length; i++) {
+    const src = sampled[i]!;
+    const nearest: Array<{ idx: number; angle: number }> = [];
+
+    for (let j = 0; j < sampled.length; j++) {
+      if (i === j) continue;
+      const angle = angleBetween(src, sampled[j]!);
+      if (angle <= maxAngle) nearest.push({ idx: j, angle });
+    }
+
+    nearest.sort((a, b) => a.angle - b.angle);
+
+    for (const n of nearest.slice(0, maxLinksPerPoint)) {
+      const a = Math.min(i, n.idx);
+      const b = Math.max(i, n.idx);
+      const key = `${a}:${b}`;
+      if (linked.has(key)) continue;
+      linked.add(key);
+
+      const p1 = sampled[a]!;
+      const p2 = sampled[b]!;
+      segments.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
+      const seed = Math.random();
+      seeds.push(seed, seed);
+    }
+  }
+
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute("position", new THREE.Float32BufferAttribute(segments, 3));
+  geom.setAttribute("aSeed", new THREE.Float32BufferAttribute(seeds, 1));
+
+  const mat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    uniforms: {
+      uTime: { value: 0 },
+      uColor: { value: new THREE.Color(CFG.meshColor) },
+      uOpacity: { value: lowPower ? 0.13 : 0.16 },
+    },
+    vertexShader: `
+      precision mediump float;
+      uniform float uTime;
+      attribute float aSeed;
+      varying float vAlpha;
+
+      void main() {
+        vec3 p = position;
+        vec4 world = modelMatrix * vec4(p, 1.0);
+        vec3 n = normalize((modelMatrix * vec4(p, 0.0)).xyz);
+        vec3 v = normalize(cameraPosition - world.xyz);
+        float frontFade = smoothstep(-0.08, 0.58, dot(n, v));
+        float wave = 0.72 + 0.28 * sin(uTime * 0.55 + aSeed * 6.2831);
+        vAlpha = frontFade * wave;
+        gl_Position = projectionMatrix * viewMatrix * world;
+      }
+    `,
+    fragmentShader: `
+      precision mediump float;
+      uniform vec3 uColor;
+      uniform float uOpacity;
+      varying float vAlpha;
+
+      void main() {
+        gl_FragColor = vec4(uColor, uOpacity * vAlpha);
+      }
+    `,
+  });
+
+  const mesh = new THREE.LineSegments(geom, mat);
+  mesh.renderOrder = -1;
+
+  disposers.push(() => {
+    geom.dispose();
+    mat.dispose();
+  });
+
+  return { mesh, mat };
 }
 
 function makeStarfield(count = 1200, radius = 18) {
@@ -990,12 +1095,8 @@ type RouteMode = "in" | "out";
 type RouteState = { mode: RouteMode | null; start: number; dur: number };
 type RouteEvent = { route: number; mode: RouteMode; start: number; dur: number };
 
-function shuffle<T>(arr: T[]) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j]!, arr[i]!];
-  }
-  return arr;
+function randomBetween(min: number, max: number) {
+  return min + Math.random() * Math.max(0, max - min);
 }
 
 onMounted(async () => {
@@ -1060,6 +1161,9 @@ onMounted(async () => {
     if (sampleLand(u, v)) dotPoints.push(p);
     if (dotPoints.length >= CFG.dots) break;
   }
+
+  const { mesh: meshNetwork, mat: meshMat } = makeMeshNetwork(dotPoints);
+  globe.add(meshNetwork);
 
   const { pts: dotField, mat: dotMat } = makeDotGlobe(dotPoints);
   globe.add(dotField);
@@ -1158,101 +1262,72 @@ const loader = new THREE.TextureLoader();
     routes.push(route);
   }
 
-  // scheduler
+  // scheduler: random single transactions, then immediate hub handoff.
   let events: RouteEvent[] = [];
-  let order: number[] = shuffle([...Array(nodes.value.length).keys()]);
-  let orderCursor = 0;
+  const routeReservedUntil = Array.from({ length: nodes.value.length }, () => 0);
 
-  const pickNextSource = (exclude: Set<number>) => {
-    for (let tries = 0; tries < nodes.value.length * 2; tries++) {
-      if (orderCursor >= order.length) {
-        order = shuffle([...Array(nodes.value.length).keys()]);
-        orderCursor = 0;
-      }
-      const idx = order[orderCursor++]!;
-      if (!exclude.has(idx)) return idx;
-    }
-    return null;
-  };
-
-  const pickDest = (exclude: Set<number>, usedDests: Set<number>) => {
+  const pickRandomAvailableRoute = (exclude: Set<number>, availableAt: number) => {
     const n = nodes.value.length;
-    if (n <= 1) return null;
+    const candidates: number[] = [];
 
-    for (let t = 0; t < 40; t++) {
-      const d = Math.floor(Math.random() * n);
-      if (exclude.has(d) || usedDests.has(d)) continue;
-      if (routeStates[d]?.mode) continue;
-      return d;
+    for (let i = 0; i < n; i++) {
+      if (exclude.has(i)) continue;
+      if ((routeReservedUntil[i] ?? 0) > availableAt) continue;
+      candidates.push(i);
     }
-    for (let t = 0; t < 40; t++) {
-      const d = Math.floor(Math.random() * n);
-      if (!exclude.has(d) && !usedDests.has(d)) return d;
-    }
-    return null;
+
+    if (!candidates.length) return null;
+    return candidates[Math.floor(Math.random() * candidates.length)]!;
   };
 
-  const scheduleBatch = (batchStart: number) => {
+  const scheduleTransaction = (startAt: number) => {
     const total = nodes.value.length;
-    if (total === 0) return batchStart + 2;
-
-    const minB = clamp(props.inboundBatchMin ?? 7, 1, total);
-    const maxB = clamp(props.inboundBatchMax ?? 10, minB, total);
-    const batchSize = total <= maxB
-      ? total
-      : Math.floor(Math.random() * (maxB - minB + 1)) + minB;
+    if (total === 0) return startAt + 2;
 
     const inDur = Math.max(1.6, props.inboundSeconds ?? 3.8);
     const outDur = Math.max(1.4, props.outboundSeconds ?? inDur * 0.85);
-    const inSt = clamp(props.inboundStaggerSeconds ?? 0.18, 0.0, 0.6);
-    const outDelay = clamp(props.outboundDelaySeconds ?? 0.1, 0.0, 0.8);
-    const outSt = clamp(props.outboundStaggerSeconds ?? 0.1, 0.0, 0.6);
-    const pause = clamp(props.batchPauseSeconds ?? 0.35, 0.0, 2.0);
+    const retryGap = clamp(props.batchPauseSeconds ?? 0.35, 0.2, 1.2);
+    const minGap = clamp(props.inboundStaggerSeconds ?? 0.18, 0.08, 0.8);
+    const maxGap = clamp(
+      minGap + (props.outboundStaggerSeconds ?? 0.1) + (props.batchPauseSeconds ?? 0.35),
+      minGap + 0.12,
+      1.4
+    );
 
-    const sources: number[] = [];
-    const excludeSources = new Set<number>();
+    const src = pickRandomAvailableRoute(new Set(), startAt);
+    if (src == null) return startAt + retryGap;
 
-    for (let i = 0; i < batchSize; i++) {
-      const s = pickNextSource(excludeSources);
-      if (s == null) break;
-      sources.push(s);
-      excludeSources.add(s);
+    const handoffAt = startAt + inDur;
+    const dest = pickRandomAvailableRoute(new Set([src]), handoffAt);
+    if (dest == null) return startAt + retryGap;
+
+    events.push({ route: src, mode: "in", start: startAt, dur: inDur });
+    events.push({ route: dest, mode: "out", start: handoffAt, dur: outDur });
+
+    routeReservedUntil[src] = handoffAt;
+    routeReservedUntil[dest] = handoffAt + outDur;
+
+    const nextGap = randomBetween(minGap, maxGap);
+    const nextStart = startAt + nextGap;
+
+    if (total > 3) return nextStart;
+
+    const earliestFree = Math.min(...routeReservedUntil);
+    return Math.max(nextStart, earliestFree + randomBetween(0.08, 0.26));
+  };
+
+  const pruneSchedule = (t: number) => {
+    const keepFrom = t - Math.max(props.inboundSeconds ?? 3.8, props.outboundSeconds ?? 3.2) - 1;
+    for (let i = 0; i < routeReservedUntil.length; i++) {
+      if (routeReservedUntil[i]! < keepFrom) routeReservedUntil[i] = 0;
     }
-
-    const usedDests = new Set<number>();
-
-    for (let i = 0; i < sources.length; i++) {
-      const src = sources[i]!;
-      const startIn = batchStart + i * inSt;
-      events.push({ route: src, mode: "in", start: startIn, dur: inDur });
-
-      const exclude = new Set<number>(excludeSources);
-      exclude.add(src);
-
-      const dest = pickDest(exclude, usedDests);
-      if (dest != null) {
-        usedDests.add(dest);
-        const startOut = startIn + inDur + outDelay + i * outSt;
-        events.push({ route: dest, mode: "out", start: startOut, dur: outDur });
-      }
-    }
-
-    const lastInEnd = batchStart + (sources.length - 1) * inSt + inDur;
-    const lastOutStart =
-      batchStart +
-      (sources.length - 1) * inSt +
-      inDur +
-      outDelay +
-      (sources.length - 1) * outSt;
-    const lastOutEnd = lastOutStart + outDur;
-
-    return Math.max(lastInEnd, lastOutEnd) + pause;
   };
 
   let nextBatchAt = reduce ? 0.2 : 0.9;
   const ensureSchedule = (t: number) => {
     const lookAhead = lowPower ? 8 : 16;
-    while (nextBatchAt < t + lookAhead) nextBatchAt = scheduleBatch(nextBatchAt);
+    pruneSchedule(t);
+    while (nextBatchAt < t + lookAhead) nextBatchAt = scheduleTransaction(nextBatchAt);
     events.sort((a, b) => a.start - b.start);
   };
 
@@ -1353,6 +1428,7 @@ const loader = new THREE.TextureLoader();
 
     (dotMat as any).uniforms.uTime.value = t;
     (dotMat as any).uniforms.uPulseSpeed.value = props.dotPulseSpeed!;
+    (meshMat as any).uniforms.uTime.value = t;
 
     ensureSchedule(t);
 
