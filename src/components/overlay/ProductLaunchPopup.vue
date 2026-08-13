@@ -82,7 +82,7 @@ const props = defineProps({
     default:
       "ສາມາດເຮັດທຸລະກຳໂອນເງິນໄດ້ຢ່າງສະດວກ, ວ່ອງໄວ, ມີຄວາມປອດໄພສູງ ແລະ ບໍລິການຕະຫຼອດ 24 ຊົ່ວໂມງ (24/7 Service).",
   },
-  imageUrl: { type: String, default: "/product/product4/Transfer_Currentcy.png" },
+  imageUrl: { type: String, default: "/product/product4/Transfer_Currentcy.png?v=20260813" },
   primaryCtaLabel: { type: String, default: "ອ່ານເພີ່ມເຕີມ" },
   secondaryCtaLabel: { type: String, default: "ປິດ" },
   primaryHref: { type: String, default: "/products_service/mobile-transfer" },

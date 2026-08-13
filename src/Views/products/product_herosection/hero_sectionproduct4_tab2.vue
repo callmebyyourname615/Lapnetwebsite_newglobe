@@ -82,7 +82,7 @@ const props = defineProps({
     imageSrc: {
         type: String,
         default:
-            "/product/product4/Transfer_Currentcy.png",
+            "/product/product4/Transfer_Currentcy.png?v=20260813",
     },
 });
 
